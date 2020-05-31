@@ -32,6 +32,12 @@ class DevelopmentConfig(Config):
     DB_USERNAME = "root"
     DB_PASSWORD = "example"
 
+
+    S3_BUCKET_NAME = 'pie-data'
+    AWS_ACCESS_KEY_ID = "AKIATBIENWNGMB723GPF"
+    AWS_SECRET_ACCESS_KEY = "nlqKoQ/q1B0xM6ZwFJV8RDgmFsUTmqzsW81tosFO"
+
+
     UPLOADS = "/home/username/projects/flask_test/FLASKPROJECT/app/static/images/uploads"
     IMAGE_UPLOADS = "/Users/hyunjung/Projects/FlaskProject/app/static/img/uploads"
 

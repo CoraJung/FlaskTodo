@@ -9,18 +9,19 @@
 
             <h1>Upload Image</h1>
             <hr>
-
             <form action="/upload-image" method="POST" enctype="multipart/form-data">
 
                 <div class="form-group">
                     <label>Select image</label>
                     <div class="custom-file">
-                        <input oninput="filesize(this);" type="file" class="custom-file-input" multiple="true" name="image" id="image" autocomplete="off" required>
+                        <input oninput="handleFileSelect(this);" type="file" class="custom-file-input" multiple="true" name="image" id="image" autocomplete="off" required>
                         <label class="custom-file-label" for="image">Select image...</label>
                     </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary">Upload image</button>
+
+                <div id="image-list" class="row" style="margin: 20px 0px;"></div>
             </form>
 
         </div>
@@ -32,9 +33,37 @@
 {% block script %}
 
 <script>
-    function filesize(elem){
+    var imageListDiv = document.getElementById('image-list');
 
-        document.cookie = `filesize=${elem.files[0].size}`
+    function handleFileSelect(element){
+        const files = element && element.files;
+        if (!files) return;
+
+        const images = [...files]
+            .filter(file => /image/i.test(file.type))
+
+        for (const image of images) {
+            const inputElement = document.createElement("div");
+            inputElement.className = '.col-md-2';
+            inputElement.innerText = `${image.name}\nsize: ${image.size}`;
+            inputElement.style.backgroundColor = 'gainsboro';
+            inputElement.style.padding = '20px';
+            inputElement.style.borderRadius = '6px';
+            inputElement.style.fontSize = '20px';
+            inputElement.style.fontStyle = 'bolds';
+
+            imageListDiv.appendChild(inputElement);
+        }
+
+        var firstFile = files && files[0];
+        if (!firstFile) return;
+
+        console.log(firstFile);
+        var fileSize = firstFile.size;
+
+        document.cookie = `filesize=${fileSize}`
+        console.log(fileSize);
+        console.log('printed file size');
 
     }
 

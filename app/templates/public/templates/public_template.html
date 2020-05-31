@@ -66,6 +66,12 @@
         crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 
+    <script>
+    var element = document.getElementsByClassName('custom-file-input');
+    element = element && element[0];
+
+    </script>
+
     {% block script %}
     {% endblock %}
 
