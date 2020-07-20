@@ -11,6 +11,8 @@ from botocore.exceptions import ClientError, WaiterError
 from botocore.client import Config
 from boto3.s3.transfer import TransferConfig
 import botocore
+import re
+import pandas as pd
 
 @app.template_filter("clean_date")
 def clean_date(dt):
@@ -115,15 +117,19 @@ def make_file_name(filename):
     object_name = unique_key + "/" + object_name
 
 
-
-
 def upload_file_s3(file_name, bucket, object_name=None):
     if object_name is None:
         object_name = file_name
 
+
+    unique_key, object_name = object_name.split("_", 1)
+    object_name = os.path.join(unique_key, object_name)
+
+
     #upload the file to s3
     s3_client = boto3.client('s3', aws_access_key_id=app.config["AWS_ACCESS_KEY_ID"],
-                    aws_secret_access_key=app.config["AWS_SECRET_ACCESS_KEY"])
+                     aws_secret_access_key=app.config["AWS_SECRET_ACCESS_KEY"])
+
 
     s3_resource = boto3.resource('s3')
     
@@ -145,13 +151,10 @@ def upload_file_s3(file_name, bucket, object_name=None):
 
     # upload the file to the bucket
     try:
-        # create a unique user directory where all of the files are to be placed
-        unique_key = str(uuid4())
-        object_name = unique_key + "/" + object_name
 
         mb = 1024 ** 2
         config = TransferConfig(multipart_threshold=30*mb)
-        s3_client.upload_file(file_name, bucket, object_name, Config=config)
+        s3_client.upload_file(file_name, bucket, object_name, Config=config, ExtraArgs={'ACL': 'public-read'})
 
     except ClientError as e:
         logging.error(e)
@@ -164,66 +167,81 @@ def upload_file_s3(file_name, bucket, object_name=None):
 
 
 @app.route("/upload-image", methods=["GET", "POST"])
+
 def upload_image():
+    result = request.form
+    print("-----------------------------------------")
+    
+    for i in result:
+        print(i)
+    print("-----------------------------------------")
+    print(result.items())
+    for dict_ in result.items():
+        print(dict_)
+    return 
 
-    if request.method == "POST":
+    if request.method != "POST":
+        return render_template("public/upload_image.html")
 
-        if request.files:
+    if not request.files:
+        return render_template("public/upload_image.html")
 
-            if not allowed_image_filesize(request.cookies.get("filesize")):
-                print("File exceeded maximum size")
-                return redirect(request.url)
+    if not allowed_image_filesize(request.cookies.get("filesize")):
+        print("File exceeded maximum size")
+        return redirect(request.url)
 
-            image = request.files["image"]
+    image = request.files["image"]
 
-            if image.filename == "":
-                print("image must have a filename")
-                return redirect(request.url)
+    if image.filename == "":
+        print("image must have a filename")
+        return redirect(request.url)
+    
+    if not allowed_image(image.filename):
+        print("That image extension is not allowed")
+        return redirect(request.url)
+    
+    else:
+        files = request.files.getlist("image")
+
+        # create a unique key to attach to original input image when it was first created.
+        unique_key = str(uuid4())
+
+        for file in files:
+            filename = secure_filename(file.filename)
+            input_filename, file_extension = os.path.splitext(filename)
             
-            if not allowed_image(image.filename):
-                print("That image extension is not allowed")
-                return redirect(request.url)
+            date = datetime.utcnow()
+            date = date.strftime("%Y-%m-%d-%H%MZ")
             
-            else:
-                files = request.files.getlist("image")
-                for file in files:
-                    filename = secure_filename(file.filename)
-                    save_path = os.path.join(app.config["IMAGE_UPLOADS"], filename)
-                    file.save(save_path)
+            unique_filename = unique_key + "_" + input_filename + "_" + date + file_extension
+            print("filename with unique key and date attached: ", unique_filename)
 
-                    print("save_path is: ", save_path)
-                    print("filename is: ", filename)
+            # save input image to local folder
+            save_path = os.path.join(app.config["IMAGE_UPLOADS"], unique_filename)
+            file.save(save_path)
 
-                    filename, file_extension = os.path.splitext(filename)
+            # upload original input file to S3 & granting public access to s3
+            success = upload_file_s3(file_name=save_path, bucket="pie-data", object_name=unique_filename)
+            print("success is: ", success)
 
-                    # upload original input file to S3 & granting public access to s3
-                    date = datetime.utcnow()
-                    date = date.strftime("%Y-%m-%d-%H%MZ")
-                    
-                    filename = filename + "_" + date + file_extension
-                    print("filename is: ", filename)
+            # run analysis and store the processed file to S3
+            boundary_im_url, url_ls, df = process_file(input_src=save_path, object_name=unique_filename)
+            print(df)
 
-                    # input file upload to s3
-                    success = upload_file_s3(file_name=save_path, bucket="pie-data", object_name=filename)
-                    print("success is: ", success)
+            # remove input file from server
+            print("start removing input file")
+            os.remove(save_path)
+            print("file removed from the server")
 
-                    # run analysis and store the processed file to S3
-                    process_file(input_src=save_path, object_name=filename)
+            return render_template("public/render_image.html", boundary_im_url=boundary_im_url, url_ls=url_ls, column_names=df.columns.values,
+            row_data=list(df.values.tolist()), zip=zip)                
 
-                    # remove input file from server
-                    os.remove(save_path)
-                    print("file removed from the server")
+        flash("File(s) successfully uploaded")
 
-                    # create url for individual user folder (UU ID)
-                    #return redirect(url_for('get_image', filename=filename))
+    print("Image saved")
 
-                    return redirect(url_for('get_image', filename=filename))
-
-                flash("File(s) successfully uploaded")
-
-            print("Image saved")
-
-            return redirect(request.url)
+    #return redirect(request.url)
+    # return "OK"
 
     return render_template("public/upload_image.html")
 
@@ -236,36 +254,78 @@ def process_file(input_src, object_name):
 
     # locate files
     output_dst = app.config["CLIENT_IMAGES"] # /Users/hyunjung/Projects/FlaskProject/app/static/client/img
-    # input_dst = '/Users/hyunjung/MATLAB-Drive/simple_code_test_ims'
-    # move_file(input_src, input_dst)
+    url_ls = []
+    df_to_render_csv = None
 
     colony_mask, colony_property_df = analyze_single_image(
         hole_fill_area=np.inf, cleanup=False, max_proportion_exposed_edge=0.75,
         save_extra_info=True, image_type="brightfield", input_im_path=input_src, output_path=output_dst)
 
     # upload processed files stored in the server to s3 bucket
+    # filter out unnecessary dierctories and set them as upload target
+    folder_ls = ['single_im_colony_properties', 'colony_center_overlays', 'jpgGRimages', 
+                'boundary_ims', 'threshold_plots', 'colony_masks']
 
     for output_folder in os.listdir(output_dst):
-        output_folder = os.path.join(app.config["CLIENT_IMAGES"], output_folder)
-        print("output file is : ", output_folder)
-        
-        if len(output_folder) != 0:
-            output_files = os.listdir(output_folder)
+        output_folder_path = os.path.join(app.config["CLIENT_IMAGES"], output_folder)
+        print("output folder is : ", output_folder)
+
+        if output_folder in folder_ls:
+            output_files = os.listdir(output_folder_path)
+
             for output_file in output_files:
-                success = upload_file_s3(output_file, "pie-data", object_name)
-                print("upload success: ", object_name)
+                print("output_file: ", output_file)
+                unique_key, filename = output_file.split("_", 1)
+
+                output_file_final = "_".join([unique_key, output_folder, filename])
+                print("output_file_final: ", output_file_final)
+
+                output_file_path = os.path.join(output_folder_path, output_file)
+                print("output_file_path: ", output_file_path)
+
+                # threshold_info.csv is the only file that doesn't have unique key and input filename in its filename, so manually extract that informration.
+                if output_file == "threshold_info.csv":
+                    df = pd.read_csv(output_file_path)
+                    input_name = df.columns[0]
+                    unique_key = input_name.split("_", 1)[0]
+                    filename_dict = re.match(r"(?P<filename>.+)_(?P<date_time>\d{4}-\d{2}-\d{2}-\d{4}Z)$", input_name.split("_", 1)[1]).groupdict()
+                    input_filename = filename_dict["filename"]
+                    date = filename_dict["date_time"]
+
+                    output_file_final = "_".join([unique_key, output_folder, input_filename, date, output_file])
+
+
+                success = upload_file_s3(file_name=output_file_path, bucket="pie-data", object_name=output_file_final)
+
+                # get url for image file and csv file that will be rendered for client
+                bucket_name = "pie-data"
+                region_name = "us-east-2"
+                url_head = f"https://{bucket_name}.s3.{region_name}.amazonaws.com"
+
+                unique_key, object_name = output_file_final.split("_", 1)
+                object_name = os.path.join(unique_key, object_name)
+                url = os.path.join(url_head, object_name)
+                url_ls.append(url)
+                
+                if "boundary_ims" in output_file_final:
+                    print("boubdary_ims is in output_file: ", output_file_final)
+                    boundary_im_url = url
+                
+                # for csv file that needs to be rendered in table format
+                if "single_im_colony_properties" in output_file_final:
+                    print("안된다에 오백원")
+                    df_to_render_csv = pd.read_csv(output_file_path)
+
+                if success:
+                    print("file successfully uploaded to s3")
+                    os.remove(output_file_path)
+                    print("file successfully removed from the server")
+                else:
+                    abort(404)
 
         else: pass
-
-        # upload file to s3 
-        success = upload_file_s3(output_file, "pie-data", output_file)
-        print("success is : ", success)
-
-        if success != False:
-            print("file successfully uploaded to s3")
-            os.remove(output_file)
-        else:
-            abort(404)
+    
+    return boundary_im_url, url_ls, df_to_render_csv
 
     # move output file
     # output_src = '/Users/hyunjung/MATLAB-Drive/simple_code_test_ims_output/boundary_ims'
