@@ -169,15 +169,42 @@ def upload_file_s3(file_name, bucket, object_name=None):
 @app.route("/upload-image", methods=["GET", "POST"])
 
 def upload_image():
+
+    # set default values
+    hole_fill_area=np.inf
+    cleanup=False
+    max_proportion_exposed_edge=0.25
+    save_extra_info=True
+    image_type="brightfield"
+    user_email = ""
+    review_permission = False
+
     result = request.form
-    print("-----------------------------------------")
-    
-    for i in result:
-        print(i)
-    print("-----------------------------------------")
-    print(result.items())
-    for dict_ in result.items():
-        print(dict_)
+
+    # set parameters
+    for key, value in result.items():
+        print(key, value)
+
+        if key == "ImageType" and value == "phasecontrast":
+            image_type = value
+        
+        elif key == "HoleFillArea":
+            if value == "inf" or value == "":
+                pass
+            else:
+                hole_fill_area = int(value)
+        
+        elif key == "MaxProportionExposedEdge" and value != "":
+            cleanup = True
+            max_proportion_exposed_edge = float(value)
+        
+        elif key == "UserEmail" and value != "":
+            user_email = value
+        
+        elif key == "Disclaimer":
+            review_permission = True
+        
+
     return 
 
     if request.method != "POST":
@@ -258,8 +285,8 @@ def process_file(input_src, object_name):
     df_to_render_csv = None
 
     colony_mask, colony_property_df = analyze_single_image(
-        hole_fill_area=np.inf, cleanup=False, max_proportion_exposed_edge=0.75,
-        save_extra_info=True, image_type="brightfield", input_im_path=input_src, output_path=output_dst)
+        hole_fill_area=hole_fill_area, cleanup=cleanup, max_proportion_exposed_edge=max_proportion_exposed_edge,
+        save_extra_info=True, image_type=image_type, input_im_path=input_src, output_path=output_dst)
 
     # upload processed files stored in the server to s3 bucket
     # filter out unnecessary dierctories and set them as upload target

@@ -8,19 +8,35 @@
         <div class="col">
 
             <h1>Colony Recognition Analysis</h1>
+
+            <hr>
         
             <form action="/upload-image" method="POST" enctype="multipart/form-data">
 
                 <div class="form-group">
-                    <label>Upload single Image (maximum image size: ~~ MB)</label>
+                    <label><h4>Upload single Image</h4></label>
                     <div class="custom-file">
-                        <input oninput="handleFileSelect(this);" type="file" class="custom-file-input" multiple="true" name="image" id="image" autocomplete="off" required>
-                        <label class="custom-file-label" for="image">Select image...</label>
+                        <input
+                            oninput="handleFileSelect(this);"
+                            type="file"
+                            class="custom-file-input"
+                            multiple="true"
+                            name="image"
+                            id="image"
+                            autocomplete="off"
+                            #required
+                        >
+                        <label class="custom-file-label" for="image">
+                            Select image...
+                        </label>
+                    </div>
+                    <div>
+                        <medium>maximum image size: 000 MB</medium>
                     </div>
 
                     <hr>
 
-                    <h5>Image Analysis Parameter Selection</h5>
+                    <!-- <h5>Image Analysis Parameter Selection</h5> -->
                     <!-- Image Type -->
                     <p>
                         <!-- <div class="dropdown">
@@ -36,19 +52,34 @@
                             </div>
                         </div> -->
                         <div>
-                        <label>Image Type</label>
+                            <label><h4>Image Type</h4></label>
                         </div>
                         <div>
-                        <button type="button" class="img-type-btn btn btn-outline-primary" id="brightField">Brightfield</button>
-                        <button type="button" class="img-type-btn btn btn-outline-primary" id="phaseConstant">Phase Contrast</button>
+                            <input id="imageTypeInput" name="ImageType" value="" style="display:none;">
+                            <div
+                                type="text"
+                                class="img-type-btn btn btn-outline-primary"
+                                id="brightField"
+                                value="Brightfield"
+                            >
+                                Brightfield
+                            </div>
+                            <div
+                                type="text"
+                                class="img-type-btn btn btn-outline-primary"
+                                id="phasecontrast"    
+                                value="Phase Contrast"
+                            >
+                                Phase Contrast
+                            </div>
                         </div>
                     </p>
 
                     <!-- Hole Fill Area -->
                     <p>
                         <div>
-                        <label>Hole Fill Area</label>
-                        <input type="text" class="form-control" placeholder="inf" aria-label="hole fill area" name="HoleFillArea">
+                        <label><h4>Hole Fill Area</h4></label>
+                        <input type="text" class="form-control" placeholder="inf" aria-label="hole fill area" name="HoleFillArea" id="holefillarea">
                         <small id="holeFillAreaHelpBlock" class="form-text text-muted">
                             Size (in pixels) of the largest empty space between cells (on the inside of a colony) to consider part of the colony. Intercell space is not typically easily identified in colonies of round cells; for these we recommend first trying the default setting (Inf). However, intercell space can often be accurately parsed in colonies of rod-shaped cells.
                         </small>
@@ -56,20 +87,28 @@
                     </p>
 
                     <!-- Clean Up -->
+
                     <p>
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="customCheck1" name="CleanUp">
-                            <label class="custom-control-label" for="customCheck1">Perform Clean-Up Step</label>
+                            <label class="custom-control-label big-checkbox" for="customCheck1">
+                                <h4 id="big-checkbox-label">Perform Clean-Up Step</h4>
+                            </label>
+                            <div id="conditional_part">
+                                <medium>
+                                    <strong>Max Proportion Exposed Edge</strong>
+                                </medium>
+                                <input type="text" class="form-control" placeholder="0.25" aria-label="max_prop_exposed_edge" name="MaxProportionExposedEdge">
+                                <small id="maxProportionEdgeHelpBlock" class="form-text text-muted">
+                                The max proportion of the edge of a detected colony ‘pie piece’ that is allowed to not touch a neighboring pie piece before being removed during cleanup step. Recommended to be set to 0.25-0.4. Only applies during cleanup steps.
+                                </small>
+                            </div>
                         </div>
 
-                        <div id="conditional_part">
-                            <label>Max Proportion Exposed Edge</label>
-                            <input type="text" class="form-control" placeholder="0.25" aria-label="max_prop_exposed_edge" name="MaxProportionExposedEdge">
-                            <small id="maxProportionEdgeHelpBlock" class="form-text text-muted">
-                            The max proportion of the edge of a detected colony ‘pie piece’ that is allowed to not touch a neighboring pie piece before being removed during cleanup step. Recommended to be set to 0.25-0.4. Only applies during cleanup steps.
-                            </small>
-                        </div>
+
                     </p>
+
+                    <hr>
 
                     <!-- Disclaimer-->
                     <p>
@@ -142,42 +181,59 @@
         var firstFile = files && files[0];
         if (!firstFile) return;
 
-        console.log(firstFile);
         var fileSize = firstFile.size;
-
         document.cookie = `filesize=${fileSize}`
     }
 
     // hide max proportion exposed edge when cleanup is not checked
     $('#customCheck1').change(function() {
-        if (this.checked != true) {
-            $("#conditional_part").hide();
-        } else {
+        if (this.checked) {
             $("#conditional_part").show();
-        }
-    });
-
-    console.log($('.img-type-btn'))
-
-    btn_list = Array.from($('.img-type-btn'))
-    
-    btn_list.forEach(element => {
-        if (element.on('click')) {
-            element.style.className ="img-type-btn btn btn-primary";
-            
         } else {
-
+            $("#conditional_part").hide();
         }
-    })
-    
-    .on("click", function() {
-        console.log(this.style.className);
-        $(".img-type-btn").forEach(element => {
-            element.style.className = "img-type-btn btn btn-outline-primary"
-        });
-        this.backgroundColor= "blue";
-        this.style.className ="btn btn-primary";
     });
+
+    // change class name as image type buttons selected
+
+    var btn_list = Array.from($('.img-type-btn'));
+
+    var setButtons = event => {
+        // reset button styles
+        btn_list.forEach(_ => _.className = 'img-type-btn btn btn-outline-primary');
+
+        var target = event.target;
+        if (!target) return;
+
+        // set target button style
+        target.className = 'img-type-btn btn btn-primary';
+        
+        // set image type formData
+        var inputField = $('#imageTypeInput')[0];
+        inputField.value = target.id;
+    }
+
+    btn_list.forEach(element => {
+        if (!element.addEventListener) return;
+        if (typeof element.addEventListener !== 'function') return;
+        
+        element.addEventListener('click', setButtons);
+    })
+
+    // limit input value type on hole fill area to numbers and inf only
+    var limitOnlyNum = event => {
+        var target = event.target;
+        var value = target.value;
+
+        if (value === "inf") return;
+        if (value == +value) return;
+        
+        target.value = '';
+    }
+
+    $("#holefillarea")[0].addEventListener('change', limitOnlyNum);
+
+
 </script>
 
 {% endblock %}
