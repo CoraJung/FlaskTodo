@@ -4,6 +4,7 @@ from datetime import datetime
 import os, shutil
 from werkzeug.utils import secure_filename
 from PIE.image_properties import analyze_single_image
+from PIE.growth_measurement import run_default_growth_rate_analysis
 import numpy as np
 import boto3
 from uuid import uuid4
@@ -22,7 +23,7 @@ def clean_date(dt):
 def index():
 
     print(f"Flask ENV is set to: {app.config['ENV']}")
-    return render_template("public/upload_image.html")
+    return render_template("public/index.html")
 
 @app.route("/jinja")
 def jinja():
@@ -71,14 +72,6 @@ def jinja():
                                                 colors=colors, cool=cool, GitRemote=GitRemote, repeat=repeat, 
                                                 my_remote=my_remote, date=date, my_html=my_html, suspicious=suspicious
                                                 )
-
-@app.route("/about")
-def about():
-    return "<h1>About!</h1>"
-
-@app.route("/colony_recognition", methods=["GET", "POST"])
-def colony_recognition():
-    return render_template("public/colony_recognition.html")
 
 
 """
@@ -134,20 +127,6 @@ def upload_file_s3(file_name, bucket, object_name=None):
     s3_resource = boto3.resource('s3')
     
     success = False
-    """
-    # check if bucket is there
-    try:
-        bucket = s3_resource.Bucket(bucket)
-    except ClientError as e:
-        bucket = None
-    print("bucket name is : ", bucket)
-    
-    # create bucket object (resource representing s3 object)
-    try:
-        s3_obj = bucket.Object(object_name)
-    except ClientError:
-        s3_obj = None
-    """
 
     # upload the file to the bucket
     try:
@@ -203,9 +182,6 @@ def upload_image():
         
         elif key == "Disclaimer":
             review_permission = True
-        
-
-    return 
 
     if request.method != "POST":
         return render_template("public/upload_image.html")
@@ -252,7 +228,9 @@ def upload_image():
             print("success is: ", success)
 
             # run analysis and store the processed file to S3
-            boundary_im_url, url_ls, df = process_file(input_src=save_path, object_name=unique_filename)
+            boundary_im_url, url_ls, df = process_file(input_src=save_path, object_name=unique_filename,
+                                                        hole_fill_area=hole_fill_area, cleanup=cleanup, max_proportion_exposed_edge=max_proportion_exposed_edge,
+                                                        save_extra_info=True, image_type=image_type)
             print(df)
 
             # remove input file from server
@@ -261,7 +239,7 @@ def upload_image():
             print("file removed from the server")
 
             return render_template("public/render_image.html", boundary_im_url=boundary_im_url, url_ls=url_ls, column_names=df.columns.values,
-            row_data=list(df.values.tolist()), zip=zip)                
+                                    row_data=list(df.values.tolist()), zip=zip)                
 
         flash("File(s) successfully uploaded")
 
@@ -277,7 +255,9 @@ def upload_image():
 #     for file in files:
 #         shutil.move(os.path.join(source, file), os.path.join(destination, file))
 
-def process_file(input_src, object_name):
+def process_file(input_src, object_name, 
+                hole_fill_area, cleanup, max_proportion_exposed_edge,
+                save_extra_info, image_type):
 
     # locate files
     output_dst = app.config["CLIENT_IMAGES"] # /Users/hyunjung/Projects/FlaskProject/app/static/client/img
@@ -340,7 +320,6 @@ def process_file(input_src, object_name):
                 
                 # for csv file that needs to be rendered in table format
                 if "single_im_colony_properties" in output_file_final:
-                    print("안된다에 오백원")
                     df_to_render_csv = pd.read_csv(output_file_path)
 
                 if success:
@@ -354,34 +333,87 @@ def process_file(input_src, object_name):
     
     return boundary_im_url, url_ls, df_to_render_csv
 
-    # move output file
-    # output_src = '/Users/hyunjung/MATLAB-Drive/simple_code_test_ims_output/boundary_ims'
-    # output_dst = app.config["CLIENT_IMAGES"]
-    # move_file(output_src, output_dst)
 
-@app.route("/get-image")
+@app.route('/growth-rate', methods=['GET','POST'])
+def growth_rate_upload():
+    # if request.method == "POST":
+    #     files = flask.request.files.getlist("file")
+    #     for file in files:
+    #         file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
 
-def get_image(filename):
-    url = "https://s3.ap-northeast-2.amazonaws.com/" + filename
-    date = datetime.utcnow()
-    #folder_name = 
-    #final_file_name = 
+    # set default values
+    total_timepoint_num = 1
+    hole_fill_area = np.inf
+    cleanup = False
+    max_proportion_exposed_edge = 0.75
+    minimum_growth_time = 4
+    timepoint_spacing = 3600
+    main_channel_imagetype = 'brightfield'
+    growth_window_timepoints = 0
+
+    user_email = ""
+    review_permission = False
+
+    if request.method != "POST":
+        return render_template("public/growth_rate.html")
     
-    return send_from_directory(
-        url,
-        filename=filename,
-        as_attachment=True
-    )
-    
-    # except FileNotFoundError:
-    #     abort(404)
+    else:
+        result = request.form
 
-@app.route("/get-csv/<filename>")
-def get_csv(filename):
+        # receive parameters from client
+        for key, value in result.items():
+            print(key, value)
 
-    try:
-        return send_from_directory(app.config["CLIENT_CSV"], filename=filename, as_attachment=True
-        )
+            if key == "ImageType" and value == "phasecontrast":
+                main_channel_imagetype = value
+            
+            elif key == "HoleFillArea":
+                if value == "inf" or value == "":
+                    pass
+                else:
+                    hole_fill_area = int(value)
+            
+            elif key == "MaxProportionExposedEdge" and value != "":
+                cleanup = True
+                max_proportion_exposed_edge = float(value)
+            
+            elif key == "MinimumGrowthTime" and value != "":
+                minimum_growth_time = int(value)
+            
+            elif key == "GrowthWindowTimepoints" and value != "":
+                growth_window_timepoints = int(value)
+
+            elif key == "TimepointSpacing" and value != "":
+                timepoint_spacing = int(value)
+            
+            elif key == "UserEmail" and value != "":
+                user_email = value
+            
+            elif key == "Disclaimer":
+                review_permission = True
+
+        files = request.files.getlist("image")
+        total_timepoint_num = len(files)
+        print("total_timepoint_num: ", total_timepoint_num)
+
+        print("start uploading files to the local server")
+        for file in files:
+            filename = secure_filename(file.filename)
+            print(filename)
+
+            # save input image to local folder
+            save_path = os.path.join(app.config["IMAGE_UPLOADS"], filename)
+            file.save(save_path)
+
+        input_path = app.config["IMAGE_UPLOADS"]
+        ouput_path = app.config["CLIENT_IMAGES"]
+
+        print("run growth rate analysis")
+        run_default_growth_rate_analysis(input_path=input_path, output_path=ouput_path,
+            total_timepoint_num=total_timepoint_num, hole_fill_area=hole_fill_area, cleanup=cleanup,
+            max_proportion_exposed_edge=max_proportion_exposed_edge, minimum_growth_time=minimum_growth_time,
+            timepoint_spacing=timepoint_spacing, main_channel_imagetype=main_channel_imagetype,
+            growth_window_timepoints=growth_window_timepoints, total_xy_position_num=4
+            )
     
-    except FileNotFoundError:
-        abort(404)
+    return render_template("public/render_image_gr.html")

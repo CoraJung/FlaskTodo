@@ -1,20 +1,23 @@
 {% extends "public/templates/public_template.html" %}
 
-{% block title %}Upload Image{% endblock %}
+{% block title %}Growth Rate Analysis{% endblock %}
 
 {% block main %}
 <div class="container">
     <div class="row">
         <div class="col">
-
-            <h1>Colony Recognition Analysis</h1>
+            <h1>Growth Rate Analysis</h1>
+            <p>Brief instructions of growth rate (e.g. upload multiple consecutive timepoint images, etc).
+            To set up a file for an experiment, modify an existing setup file (or make your own from scratch, although this is not recommended!). 
+            More detailed explanations of all the parameters will be added later, but for now, you can just read the Explanation column for each parameter in the setup files provided.
+            </p>
 
             <hr>
-        
-            <form action="/upload-image" method="POST" enctype="multipart/form-data">
+            
+            <form action="/growth-rate" method="POST" enctype="multipart/form-data">
 
                 <div class="form-group">
-                    <label><h4>Upload single Image</h4></label>
+                    <label><h4>Upload multiple images</h4></label>
                     <div class="custom-file">
                         <input
                             oninput="handleFileSelect(this);"
@@ -27,32 +30,24 @@
                             #required
                         >
                         <label class="custom-file-label" for="image">
-                            Select image...
+                            Select images...
                         </label>
                     </div>
                     <div>
                         <medium>maximum image size: 000 MB</medium>
+                        <br>
+                        <medium class="text-muted">(the user must have some way of ordering these!)</medium>
+
                     </div>
 
                     <hr>
+                    
 
-                    <!-- <h5>Image Analysis Parameter Selection</h5> -->
+                    <!-- <h5>Growth Rate Analysis Parameter Selection</h5> -->
                     <!-- Image Type -->
                     <p>
-                        <!-- <div class="dropdown">
-                            <label>Select Image Type</label>
-                            <div>
-                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Image Type
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" name="ImageType">
-                            <a class="dropdown-item" href="#">Brightfield</a>
-                            <a class="dropdown-item" href="#">Phase Contrast</a>
-                            </div>
-                            </div>
-                        </div> -->
                         <div>
-                            <label><h4>Image Type</h4></label>
+                            <label><h4>1. Image Type</h4></label>
                         </div>
                         <div>
                             <input id="imageTypeInput" name="ImageType" value="" style="display:none;">
@@ -78,7 +73,7 @@
                     <!-- Hole Fill Area -->
                     <p>
                         <div>
-                        <label><h4>Hole Fill Area</h4></label>
+                        <label><h4>2. Hole Fill Area</h4></label>
                         <input type="text" class="form-control" placeholder="inf" aria-label="hole fill area" name="HoleFillArea" id="holefillarea">
                         <small id="holeFillAreaHelpBlock" class="form-text text-muted">
                             Size (in pixels) of the largest empty space between cells (on the inside of a colony) to consider part of the colony. Intercell space is not typically easily identified in colonies of round cells; for these we recommend first trying the default setting (Inf). However, intercell space can often be accurately parsed in colonies of rod-shaped cells.
@@ -89,10 +84,11 @@
                     <!-- Clean Up -->
 
                     <p>
+                        <h4>3. Perform Clean-up Step</h4>
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="customCheck1" name="CleanUp">
                             <label class="custom-control-label big-checkbox" for="customCheck1">
-                                <h4 id="big-checkbox-label">Perform Clean-Up Step</h4>
+                                <h5 id="big-checkbox-label">Enable</h5>
                             </label>
                             <div id="conditional_part">
                                 <medium>
@@ -103,9 +99,51 @@
                                 The max proportion of the edge of a detected colony ‘pie piece’ that is allowed to not touch a neighboring pie piece before being removed during cleanup step. Recommended to be set to 0.25-0.4. Only applies during cleanup steps.
                                 </small>
                             </div>
+                            
+                            <small id="cleanUpHelpBlock" class="form-text text-muted">
+                            Whether to perform recursive cleanup step to remove pieces of background detected as part of the colony. This is helpful in certain imaging conditions but can result in parts of real colonies being missed; we recommend first trying analysis on a set of images without cleanup first. Images taken under identical imaging conditions should be consistent in whether or not they require cleanup.
+                            </small>
                         </div>
 
+                    </p>
 
+                    <!-- Minimum Growth Time -->
+                    <p>
+                        <div>
+                            <label><h4>4. Minimum Growth Time</h4></label>
+                                <input type="text" class="form-control" placeholder="4" aria-label="minimum_growth_time" name="MinimumGrowthTime" id="minimumgrowthtime">
+                                <small id="MinimumGrowthTimeHelpBlock" class="form-text text-muted">
+                                    Smallest number of timepoints in which an object needs to be independently tracked in order to be considered a colony; important for removing objects like debris from analysis
+                                    (enter int, default = 4, must be >=0 )
+                                </small>
+                        </div>
+                    </p>
+
+                     <!-- Growth Window Timepoints -->
+                     <p>
+                        <div>
+                            <label><h4>5. Growth Window Timepoints</h4></label>
+                        
+                            <input type="text" class="form-control" placeholder="0" aria-label="growth_window_timepoints" name="GrowthWindowTimepoints" id="growthwindowtimepoints">
+                            <small id="GrowthWindowTimepointsHelpBlock" class="form-text text-muted">
+                                Number of timepoints to include in growth rate calculation. 
+                                If set to 0, use all timepoints to calculate growth rate; 
+                                otherwise, report the highest growth rate for a colony that includes at least minimum_timepoint_number
+                                (enter int, default = 0, must be >=1)
+                            </small>
+                        </div>
+                    </p>
+
+                    <!-- Timepoint Spacing -->
+                    <p>
+                        <div>
+                            <label><h4>6. Timepoint Spacing</h4></label>
+                        
+                            <input type="text" class="form-control" placeholder="3600" aria-label="timepoint_spacing" name="TimepointSpacing" id="timepointspacing">
+                            <small id="TimepointSpacingHelpBlock" class="form-text text-muted">
+                                The number of seconds elapsed between each timepoint (enter int, default = 3600)
+                            </small>
+                        </div>
                     </p>
 
                     <hr>
@@ -147,7 +185,7 @@
                   <a href="https://github.com/Siegallab" target="_blank" class="card-link">Download Codes</a>
             </div>
             <br>
-
+    
         </div>
     </div>
 </div>
@@ -155,8 +193,8 @@
 {% endblock %}
 
 {% block script %}
-
 <script>
+
     var imageListDiv = document.getElementById('image-list');
 
     function handleFileSelect(element){
@@ -234,7 +272,5 @@
 
     $("#holefillarea")[0].addEventListener('change', limitOnlyNum);
 
-
 </script>
-
 {% endblock %}
