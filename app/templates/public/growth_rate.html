@@ -40,6 +40,8 @@
 
                     </div>
 
+                    <div id="image-list" class="row" style="margin: 20px 0px;"></div>
+
                     <hr>
                     
 
@@ -175,7 +177,6 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary">Run Analysis</button>
-                <div id="image-list" class="row" style="margin: 20px 0px;"></div>
             </form>
 
             <hr>
@@ -194,28 +195,93 @@
 
 {% block script %}
 <script>
-
+    // show the names and sizes of files selected by client (show before hitting submit button)
     var imageListDiv = document.getElementById('image-list');
 
     function handleFileSelect(element){
+        
+        imageListDiv.innerHTML = "";
+
         const files = element && element.files;
         if (!files) return;
 
         const images = [...files]
             .filter(file => /image/i.test(file.type))
 
+
+        // order selected files
+        var moveLeft = (event, index) => {
+            // move files to the left
+            tmp = images[index];
+            images[index] = images[index - 1];
+            images[index - 1] = tmp;
+     
+            console.log('move this file to the left');
+        }
+
+        var moveRight = event => {
+            // move files to the right
+            tmp = images[index];
+            images[index] = images[index + 1];
+            images[index + 1] = tmp;   
+
+            console.log('move this file to the right');
+        }
+
+        let index = 0;
+
         for (const image of images) {
+            var imageSetDiv = document.createElement('div')
+
             const inputElement = document.createElement("div");
             inputElement.className = '.col-md-2';
-            inputElement.innerText = `${image.name}\nsize: ${image.size}`;
+            inputElement.innerText = `${image.name}\nsize: ${(image.size/(1024*1024)).toFixed(3)}MB`;
             inputElement.style.backgroundColor = 'gainsboro';
-            inputElement.style.padding = '20px';
+            inputElement.style.padding = '8px';
             inputElement.style.borderRadius = '6px';
-            inputElement.style.fontSize = '20px';
+            inputElement.style.fontSize = '15px';
             inputElement.style.fontStyle = 'bolds';
+            inputElement.style.borderWidth = 'thin';
+            inputElement.style.borderColor = 'black';
+            inputElement.style.borderStyle = 'solid';
+            inputElement.style.width = "auto";
+            inputElement.style.textAlign = "center";
 
-            imageListDiv.appendChild(inputElement);
+            const buttonElement_left = document.createElement("button");
+            buttonElement_left.className = '.col-md-2';
+            buttonElement_left.style.backgroundColor = '#21ABCD';
+            buttonElement_left.style.padding = '2px';
+            buttonElement_left.style.borderRadius = '6px';
+            buttonElement_left.style.fontSize = '15px';
+            buttonElement_left.style.fontStyle = 'bolds';
+            buttonElement_left.style.width = '50%';
+            buttonElement_left.innerText = '<';
+            buttonElement_left.type = 'button';
+
+            const buttonElement_right = document.createElement("button");
+            buttonElement_right.className = '.col-md-2';
+            buttonElement_right.style.backgroundColor = '#21ABCD';
+            buttonElement_right.style.padding = '2px';
+            buttonElement_right.style.borderRadius = '6px';
+            buttonElement_right.style.fontSize = '15px';
+            buttonElement_right.style.fontStyle = 'bolds';
+            buttonElement_right.style.width = '50%';
+            buttonElement_right.innerText = '>';
+            buttonElement_right.type = 'button';
+            
+            const idx = index;
+            buttonElement_left.addEventListener('click', (event) => moveLeft(event, idx));
+            buttonElement_right.addEventListener('click', moveRight);
+
+            imageSetDiv.appendChild(inputElement);
+            imageSetDiv.appendChild(buttonElement_left);
+            imageSetDiv.appendChild(buttonElement_right);
+
+            imageListDiv.appendChild(imageSetDiv);
+
+            index++;
         }
+
 
         var firstFile = files && files[0];
         if (!firstFile) return;
@@ -223,6 +289,7 @@
         var fileSize = firstFile.size;
         document.cookie = `filesize=${fileSize}`
     }
+
 
     // hide max proportion exposed edge when cleanup is not checked
     $('#customCheck1').change(function() {
@@ -234,7 +301,6 @@
     });
 
     // change class name as image type buttons selected
-
     var btn_list = Array.from($('.img-type-btn'));
 
     var setButtons = event => {

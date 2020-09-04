@@ -116,7 +116,10 @@ def upload_file_s3(file_name, bucket, object_name=None):
 
 
     unique_key, object_name = object_name.split("_", 1)
+    print("unique_key is: ", unique_key)
+    print("object_name is: ", object_name)
     object_name = os.path.join(unique_key, object_name)
+    print("renamed object name: ", object_name)
 
 
     #upload the file to s3
@@ -220,7 +223,7 @@ def upload_image():
             print("filename with unique key and date attached: ", unique_filename)
 
             # save input image to local folder
-            save_path = os.path.join(app.config["IMAGE_UPLOADS"], unique_filename)
+            save_path = os.path.join(app.config["IMAGE_UPLOADS"], "cr", unique_filename)
             file.save(save_path)
 
             # upload original input file to S3 & granting public access to s3
@@ -260,7 +263,7 @@ def process_file(input_src, object_name,
                 save_extra_info, image_type):
 
     # locate files
-    output_dst = app.config["CLIENT_IMAGES"] # /Users/hyunjung/Projects/FlaskProject/app/static/client/img
+    output_dst = os.path.join(app.config["CLIENT_IMAGES"], "cr_processed") # /Users/hyunjung/Projects/FlaskProject/app/static/client/img/cr_processed
     url_ls = []
     df_to_render_csv = None
 
@@ -274,7 +277,7 @@ def process_file(input_src, object_name,
                 'boundary_ims', 'threshold_plots', 'colony_masks']
 
     for output_folder in os.listdir(output_dst):
-        output_folder_path = os.path.join(app.config["CLIENT_IMAGES"], output_folder)
+        output_folder_path = os.path.join(app.config["CLIENT_IMAGES"], "cr_processed", output_folder)
         print("output folder is : ", output_folder)
 
         if output_folder in folder_ls:
@@ -402,11 +405,11 @@ def growth_rate_upload():
             print(filename)
 
             # save input image to local folder
-            save_path = os.path.join(app.config["IMAGE_UPLOADS"], filename)
+            save_path = os.path.join(app.config["IMAGE_UPLOADS"], "gr", filename)
             file.save(save_path)
 
-        input_path = app.config["IMAGE_UPLOADS"]
-        ouput_path = app.config["CLIENT_IMAGES"]
+        input_path = os.path.join(app.config["IMAGE_UPLOADS"], "gr")
+        ouput_path = os.path.join(app.config["CLIENT_IMAGES"], "gr_processed")
 
         print("run growth rate analysis")
         run_default_growth_rate_analysis(input_path=input_path, output_path=ouput_path,
