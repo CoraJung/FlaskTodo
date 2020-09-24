@@ -1,0 +1,2 @@
+flask
+flowserv>=0.4.1

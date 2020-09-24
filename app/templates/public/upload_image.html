@@ -10,8 +10,8 @@
             <h1>Colony Recognition Analysis</h1>
 
             <hr>
-        
-            <form action="/upload-image" method="POST" enctype="multipart/form-data">
+
+            <form action="/app/colonies" method="POST" enctype="multipart/form-data">
 
                 <div class="form-group">
                     <label><h4>Upload single Image</h4></label>
@@ -67,7 +67,7 @@
                             <div
                                 type="text"
                                 class="img-type-btn btn btn-outline-primary"
-                                id="phasecontrast"    
+                                id="phasecontrast"
                                 value="Phase Contrast"
                             >
                                 Phase Contrast
@@ -133,7 +133,7 @@
                         Why we would want this...
                     </small>
                     </p>
-                
+
                 </div>
 
                 <button type="submit" class="btn btn-primary">Run Analysis</button>
@@ -208,7 +208,7 @@
 
         // set target button style
         target.className = 'img-type-btn btn btn-primary';
-        
+
         // set image type formData
         var inputField = $('#imageTypeInput')[0];
         inputField.value = target.id;
@@ -217,7 +217,7 @@
     btn_list.forEach(element => {
         if (!element.addEventListener) return;
         if (typeof element.addEventListener !== 'function') return;
-        
+
         element.addEventListener('click', setButtons);
     })
 
@@ -228,7 +228,7 @@
 
         if (value === "inf") return;
         if (value == +value) return;
-        
+
         target.value = '';
     }
 
