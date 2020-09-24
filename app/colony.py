@@ -4,7 +4,6 @@ application.
 
 from flask import Blueprint, request, render_template, url_for
 
-import numpy as np
 import pandas as pd
 
 from flowserv.app import flowapp
@@ -60,24 +59,21 @@ def pie_colonies_run():
             args['cleanup'] = True
             args['maxProportion'] = params['maxProportion'].to_argument(value)
     # Run the PIE workflow.
-    state = workflow.start_run(args)
-    run_id = state['id']
-    for obj in state['files']:
-        if obj['name'] == 'data/OUT/single_im_colony_properties/image.csv':
-            buf, _, _ = workflow.get_file(run_id=run_id, file_id=obj['id'])
-            df = pd.read_csv(buf)
-        elif obj['name'] == 'data/OUT/boundary_ims/image.jpg':
-            boundary_im_url = url_for(
-                'files.download_result_file',
-                workflow_id='piesingle',
-                run_id=run_id,
-                file_id=obj['id']
-            )
-    return render_template(
-        TEMPLATE_RESULT,
-        boundary_im_url=boundary_im_url,
-        url_ls=list(),
-        column_names=df.columns.values,
-        row_data=list(df.values.tolist()),
-        zip=zip
-    )
+    run = workflow.start_run(args)
+    if run.is_success():
+        # Load 'colony-properties' csv file as pandas data frame.
+        df = pd.read_csv(run.get_file('colony-properties').load())
+        boundary_im_url = url_for(
+            'files.download_result_file',
+            workflow_id='piesingle',
+            run_id=run.run_id,
+            file_id=run.get_file_id('boundary-image')
+        )
+        return render_template(
+            TEMPLATE_RESULT,
+            boundary_im_url=boundary_im_url,
+            url_ls=list(),
+            column_names=df.columns.values,
+            row_data=list(df.values.tolist()),
+            zip=zip
+        )
