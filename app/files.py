@@ -41,12 +41,12 @@ def download_result_file(workflow_id, run_id, file_id):
     flowserv.error.UnknownWorkflowGroupError
     """
     workflow = flowapp(identifier=workflow_id)
-    file, name, mime_type = workflow.get_file(run_id=run_id, file_id=file_id)
+    file = workflow.get_file(run_id=run_id, file_id=file_id)
     return send_file(
-        file,
+        file.open(),
         as_attachment=True,
-        attachment_filename=name,
-        mimetype=mime_type
+        attachment_filename=file.name,
+        mimetype=file.mime_type
     )
 
 

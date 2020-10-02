@@ -2,14 +2,20 @@
 application.
 """
 
+from io import BytesIO
 from flask import Blueprint, request, render_template, url_for
+from typing import IO
 
-import numpy as np
 import pandas as pd
 
 from flowserv.app import flowapp
+from flowserv.model.files.base import FlaskFile
 
 import flowserv.util as util
+
+
+"""Identifier for the colony recognition workflow."""
+WORKFLOW = 'colony_recognition'
 
 
 """Templates for PIE colony recognition web pages."""
@@ -40,10 +46,10 @@ def pie_colonies_run():
         return render_template(TEMPLATE_INPUT)
     # Get input arguments for the PIE colony recognition workflow from the
     # submitted input form.
-    workflow = flowapp('piesingle')
+    workflow = flowapp(WORKFLOW)
     params = workflow.parameters()
     args = dict({
-        'infile': util.flask_upload(files[0]),
+        'infile': FlaskFile(files[0]),
         'imageType': 'brightfield',
         'holeFillArea': 'inf',
         'cleanup': False,
@@ -60,18 +66,18 @@ def pie_colonies_run():
             args['cleanup'] = True
             args['maxProportion'] = params['maxProportion'].to_argument(value)
     # Run the PIE workflow.
-    state = workflow.start_run(args)
-    run_id = state['id']
-    for obj in state['files']:
-        if obj['name'] == 'data/OUT/single_im_colony_properties/image.csv':
-            buf, _, _ = workflow.get_file(run_id=run_id, file_id=obj['id'])
-            df = pd.read_csv(buf)
-        elif obj['name'] == 'data/OUT/boundary_ims/image.jpg':
+    run = workflow.start_run(args, poll_interval=1)
+    if run.is_error():
+        raise ValueError(run.messages())
+    for file_id, key, _ in run.files():
+        if key == 'colony-properties':
+            df = pd.read_csv(run.open(key))
+        elif key == 'boundary-image':
             boundary_im_url = url_for(
                 'files.download_result_file',
-                workflow_id='piesingle',
-                run_id=run_id,
-                file_id=obj['id']
+                workflow_id=WORKFLOW,
+                run_id=run.run_id,
+                file_id=file_id
             )
     return render_template(
         TEMPLATE_RESULT,
