@@ -14,8 +14,78 @@
             <h1>Growth Rate Analysis Output Result</h1>
             <hr>
 
-            <h4>Boundary Image</h4>
+            <h4>Boundary Image Movie</h4>
             <hr>
+
+            <img src= "{{movie_url}}" width="800">
+
+            <br>
+            <br>
+
+            <h4>Boundary Images</h4>
+            <hr>
+
+            {% for img in boundary_ims_url_ls %}
+            <img src= "{{img}}" width="800">
+            {% endfor %}
+
+            <!--url list to images under the unique user directory-->
+            <p>Link to download processed images and csv</p>
+            <ul>
+                {% for url in url_ls %}
+                <li>{{ url }}</li>
+                {% endfor %}
+            </ul>
+
+            <br>
+            <br>
+            
+            <h4>Table of Growth Rate</h4>
+            <hr>
+
+            <table>
+            
+                <tr>
+                    {% for col in column_names_grcombined %}
+                    <th>{{col}}</th>
+                    {% endfor %}
+                </tr>
+
+                {% for row in row_data_grcombined %}
+                <tr>
+                    {% for col, row_ in zip(column_names_grcombined, row) %}
+                    <td>{{row_}}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+
+            </table>
+            
+            <br>
+            <br>
+            
+            <h4>Table of Colony Properties</h4>
+            <hr>
+
+            <table>
+            
+                <tr>
+                    {% for col in column_names_cpcombined %}
+                    <th>{{col}}</th>
+                    {% endfor %}
+                </tr>
+
+                {% for row in row_data_cpcombined %}
+                <tr>
+                    {% for col, row_ in zip(column_names_cpcombined, row) %}
+                    <td>{{row_}}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+
+            </table>
+
+
 
         </div>
     </div>
