@@ -425,11 +425,13 @@ def growth_rate_upload():
         # upload input files to s3
         upload_file_s3_gr(bucket="pie-growth-rate-data", file_type="original", path=input_path, unique_key=unique_key, date=date)
         # upload processed files to s3
-        upload_file_s3_gr(bucket="pie-growth-rate-data", file_type="processed", path=ouput_path, unique_key=unique_key, date=date)
-        
-        return render_template("public/render_image_gr.html")
+        boundary_ims_url_ls, url_ls, dfs_to_render_ls, movie_url = upload_file_s3_gr(bucket="pie-growth-rate-data", file_type="processed", path=ouput_path, unique_key=unique_key, date=date)
 
-def upload_file_s3_gr(file_name=None, bucket=None, object_name=None, file_type="original", path=None, unique_key=None, date=None):
+        return render_template("public/render_image_gr.html", boundary_ims_url_ls=boundary_ims_url_ls, url_ls=url_ls, column_names_grcombined=dfs_to_render_ls[0].columns.values,
+                                                            column_names_cpcombined=dfs_to_render_ls[1].columns.values, row_data_grcombined=list(dfs_to_render_ls[0].values.tolist()), 
+                                                            row_data_cpcombined=list(dfs_to_render_ls[1].values.tolist()), movie_url=movie_url, zip=zip)
+
+def upload_file_s3_gr(bucket=None, file_type="original", path=None, unique_key=None, date=None):
     #file_name = save_path, bucket = "pie-colony-recognition-data" or "pie-growth-rate-data", object_name = unique_filename
     
     # initiate s3 client
@@ -438,6 +440,9 @@ def upload_file_s3_gr(file_name=None, bucket=None, object_name=None, file_type="
     s3_resource = boto3.resource('s3')
     success = False
 
+    url_ls = []
+    boundary_ims_url_ls = []
+    dfs_to_render_ls = []
     # upload original input images to s3
     if file_type == "original":
         #decide the filename that will be stored in s3 and upload to s3
@@ -463,7 +468,13 @@ def upload_file_s3_gr(file_name=None, bucket=None, object_name=None, file_type="
                 success = head['ContentLength']
 
             print(f"original input file {filename} is uploaded : ", success) #  if it's not False but some number, then upload successful 
+            os.remove(current_name)
+            print(f"original input file {filename} is deleted from local server")
 
+
+    url_ls = []
+    boundary_ims_url_ls = []
+    dfs_to_render_ls = []
 
     if file_type == "processed":
         print("trying to upload processed files to s3...")
@@ -482,7 +493,7 @@ def upload_file_s3_gr(file_name=None, bucket=None, object_name=None, file_type="
                     output_filename, file_extension = os.path.splitext(filename)
                     output_filename = output_filename + "_" + date + file_extension
 
-                    object_name = os.path.join(unique_key, local_path, output_filename)
+                    object_name = os.path.join(unique_key, local_path, output_filename) #unique_key/gr_processed/.../filename
                     
                     # upload the file to the bucket
                     try:
@@ -499,27 +510,36 @@ def upload_file_s3_gr(file_name=None, bucket=None, object_name=None, file_type="
 
                     print(f"processed file {filename} is uploaded : ", success) #  if it's not False but some number, then upload successful 
 
+                    # get url for image file and csv file that will be rendered for client
+                    region_name = "us-east-2"
+                    url_head = f"https://{bucket}.s3.{region_name}.amazonaws.com"
+                    
+                    download_csv_ls = ['growth_rates_combined.csv', 'colony_properties_combined.csv']
+                    if filename in download_csv_ls:
+                        url = os.path.join(url_head, object_name)
+                        print("url for client to download: ", url)
+                        url_ls.append(url)
+                        dfs_to_render_ls.append(pd.read_csv(current_name))
 
-
-            print (root) 
-            print (dirs) 
-            print (files) 
-            print ('--------------------------------') 
+                    if "boundary_ims" in root:
+                        url = os.path.join(url_head, object_name)
+                        print("boundary ims url: ", url)
+                        boundary_ims_url_ls.append(url)
+                    if "movies" in root:
+                        movie_url = os.path.join(url_head, object_name)
+                        print("movie url: ", url)
+                    
+                    if success:
+                        os.remove(current_name)
+                        print(f"processed file {filename} is deleted from local server")
     
-    # upload the file to the bucket
-    try:
-        mb = 1024 ** 2
-        config = TransferConfig(multipart_threshold=30*mb)
-        s3_client.upload_file(current_name, bucket, object_name, Config=config, ExtraArgs={'ACL': 'public-read'})
+                    else:
+                        abort(404)
 
-    except ClientError as e:
-        logging.error(e)
-        # then success is still false
-    else:
-        head = s3_client.head_object(Bucket=bucket, Key=object_name)
-        success = head['ContentLength']
-
-    print("original input files are uploaded : ", success) #  if it's not False but some number, then upload successful 
+        url_ls = url_ls + boundary_ims_url_ls
+        url_ls.sort()
+        
+        return boundary_ims_url_ls, url_ls, dfs_to_render_ls, movie_url
 
 
 
