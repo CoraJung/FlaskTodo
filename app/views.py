@@ -68,10 +68,10 @@ def jinja():
 
     suspicious = "<script>alert('You Got Hacked')</script>"
 
-    return render_template("public/jinja.html", my_name=my_name, age=age, langs=langs, freinds=friends, 
-                                                colors=colors, cool=cool, GitRemote=GitRemote, repeat=repeat, 
-                                                my_remote=my_remote, date=date, my_html=my_html, suspicious=suspicious
-                                                )
+    # return render_template("public/jinja.html", my_name=my_name, age=age, langs=langs, freinds=friends, 
+    #                                             colors=colors, cool=cool, GitRemote=GitRemote, repeat=repeat, 
+    #                                             my_remote=my_remote, date=date, my_html=my_html, suspicious=suspicious
+    #                                             )
 
 
 """
@@ -538,7 +538,7 @@ def upload_file_s3_gr(bucket=None, file_type="original", path=None, unique_key=N
 
         url_ls = url_ls + boundary_ims_url_ls
         url_ls.sort()
-        
+
         return boundary_ims_url_ls, url_ls, dfs_to_render_ls, movie_url
 
 
