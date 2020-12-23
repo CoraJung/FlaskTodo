@@ -448,7 +448,7 @@ def upload_file_s3_gr(file_name=None, bucket=None, object_name=None, file_type="
             input_filename = input_filename + "_" + date + file_extension
             object_name = os.path.join(unique_key, "original_input_files", input_filename) # example: 8ba5c8c0-9edf-4988-8099-d8a249c4d635/t10xy4_2020-12-23-0337Z.tif
             print("input filename with unique key and date attached: ", object_name) 
-
+            
             # upload the file to the bucket
             try:
                 mb = 1024 ** 2
@@ -462,17 +462,67 @@ def upload_file_s3_gr(file_name=None, bucket=None, object_name=None, file_type="
                 head = s3_client.head_object(Bucket=bucket, Key=object_name)
                 success = head['ContentLength']
 
-            print("original input files are uploaded : ", success) #  if it's not False but some number, then upload successful 
-    
+            print(f"original input file {filename} is uploaded : ", success) #  if it's not False but some number, then upload successful 
+
+
     if file_type == "processed":
         print("trying to upload processed files to s3...")
-        for (root,dirs,files) in os.walk(path, topdown=True):
+        for root, dirs, files in os.walk(path, topdown=True):
+            for filename in files:
+                if filename != ".DS_Store":
+                    # construct the full local path
+                    current_name = os.path.join(root, filename)
+                    
+                    # construct the full s3 directory path
+                    local_path_ls = root.split(os.path.sep)
+                    print("local path ls :", local_path_ls)
+                    folder_index = local_path_ls.index('gr_processed')
+                    local_path = "/".join(local_path_ls[folder_index:])
+
+                    output_filename, file_extension = os.path.splitext(filename)
+                    output_filename = output_filename + "_" + date + file_extension
+
+                    object_name = os.path.join(unique_key, local_path, output_filename)
+                    
+                    # upload the file to the bucket
+                    try:
+                        mb = 1024 ** 2
+                        config = TransferConfig(multipart_threshold=30*mb)
+                        s3_client.upload_file(current_name, bucket, object_name, Config=config, ExtraArgs={'ACL': 'public-read'})
+
+                    except ClientError as e:
+                        logging.error(e)
+                        # then success is still false
+                    else:
+                        head = s3_client.head_object(Bucket=bucket, Key=object_name)
+                        success = head['ContentLength']
+
+                    print(f"processed file {filename} is uploaded : ", success) #  if it's not False but some number, then upload successful 
+
+
+
             print (root) 
             print (dirs) 
             print (files) 
             print ('--------------------------------') 
+    
+    # upload the file to the bucket
+    try:
+        mb = 1024 ** 2
+        config = TransferConfig(multipart_threshold=30*mb)
+        s3_client.upload_file(current_name, bucket, object_name, Config=config, ExtraArgs={'ACL': 'public-read'})
+
+    except ClientError as e:
+        logging.error(e)
+        # then success is still false
+    else:
+        head = s3_client.head_object(Bucket=bucket, Key=object_name)
+        success = head['ContentLength']
+
+    print("original input files are uploaded : ", success) #  if it's not False but some number, then upload successful 
 
 
-        
+
+
 
 
