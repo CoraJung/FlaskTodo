@@ -1,0 +1,384 @@
+{% extends "public/templates/public_template.html" %}
+
+{% block title %}Growth Rate Analysis{% endblock %}
+
+{% block main %}
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1>Growth Rate Analysis</h1>
+            <p>Brief instructions of growth rate (e.g. upload multiple consecutive timepoint images, etc).
+            To set up a file for an experiment, modify an existing setup file (or make your own from scratch, although this is not recommended!). 
+            More detailed explanations of all the parameters will be added later, but for now, you can just read the Explanation column for each parameter in the setup files provided.
+            </p>
+
+            <hr>
+            
+            <form id="submit-form" action="/growth-rate" method="POST" enctype="multipart/form-data">
+
+                <div class="form-group">
+                    <label><h4>Upload multiple images</h4></label>
+                    <div class="custom-file">
+                        <input
+                            oninput="handleFileSelect(this);"
+                            type="file"
+                            class="custom-file-input"
+                            multiple="true"
+                            name="image"
+                            id="image"
+                            autocomplete="off"
+                            #required
+                        >
+                        <label class="custom-file-label" for="image">
+                            Select images...
+                        </label>
+                    </div>
+                    <div>
+                        <medium>maximum image size: 000 MB</medium>
+                        <br>
+                        <medium class="text-muted">(the user must have some way of ordering these!)</medium>
+
+                    </div>
+
+                    <div id="image-list" class="row" style="margin: 20px 0px;"></div>
+
+                    <hr>
+                    
+
+                    <!-- <h5>Growth Rate Analysis Parameter Selection</h5> -->
+                    <!-- Image Type -->
+                    <p>
+                        <div>
+                            <label><h4>1. Image Type</h4></label>
+                        </div>
+                        <div>
+                            <input id="imageTypeInput" name="ImageType" value="" style="display:none;">
+                            <div
+                                type="text"
+                                class="img-type-btn btn btn-outline-primary"
+                                id="brightField"
+                                value="Brightfield"
+                            >
+                                Brightfield
+                            </div>
+                            <div
+                                type="text"
+                                class="img-type-btn btn btn-outline-primary"
+                                id="phasecontrast"    
+                                value="Phase Contrast"
+                            >
+                                Phase Contrast
+                            </div>
+                        </div>
+                    </p>
+
+                    <!-- Hole Fill Area -->
+                    <p>
+                        <div>
+                        <label><h4>2. Hole Fill Area</h4></label>
+                        <input type="text" class="form-control" placeholder="inf" aria-label="hole fill area" name="HoleFillArea" id="holefillarea">
+                        <small id="holeFillAreaHelpBlock" class="form-text text-muted">
+                            Size (in pixels) of the largest empty space between cells (on the inside of a colony) to consider part of the colony. Intercell space is not typically easily identified in colonies of round cells; for these we recommend first trying the default setting (Inf). However, intercell space can often be accurately parsed in colonies of rod-shaped cells.
+                        </small>
+                        </div>
+                    </p>
+
+                    <!-- Clean Up -->
+
+                    <p>
+                        <h4>3. Perform Clean-up Step</h4>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="customCheck1" name="CleanUp">
+                            <label class="custom-control-label big-checkbox" for="customCheck1">
+                                <h5 id="big-checkbox-label">Enable</h5>
+                            </label>
+                            <div id="conditional_part">
+                                <medium>
+                                    <strong>Max Proportion Exposed Edge</strong>
+                                </medium>
+                                <input type="text" class="form-control" placeholder="0.25" aria-label="max_prop_exposed_edge" name="MaxProportionExposedEdge">
+                                <small id="maxProportionEdgeHelpBlock" class="form-text text-muted">
+                                The max proportion of the edge of a detected colony ‘pie piece’ that is allowed to not touch a neighboring pie piece before being removed during cleanup step. Recommended to be set to 0.25-0.4. Only applies during cleanup steps.
+                                </small>
+                            </div>
+                            
+                            <small id="cleanUpHelpBlock" class="form-text text-muted">
+                            Whether to perform recursive cleanup step to remove pieces of background detected as part of the colony. This is helpful in certain imaging conditions but can result in parts of real colonies being missed; we recommend first trying analysis on a set of images without cleanup first. Images taken under identical imaging conditions should be consistent in whether or not they require cleanup.
+                            </small>
+                        </div>
+
+                    </p>
+
+                    <!-- Minimum Growth Time -->
+                    <p>
+                        <div>
+                            <label><h4>4. Minimum Growth Time</h4></label>
+                                <input type="text" class="form-control" placeholder="4" aria-label="minimum_growth_time" name="MinimumGrowthTime" id="minimumgrowthtime">
+                                <small id="MinimumGrowthTimeHelpBlock" class="form-text text-muted">
+                                    Smallest number of timepoints in which an object needs to be independently tracked in order to be considered a colony; important for removing objects like debris from analysis
+                                    (enter int, default = 4, must be >=0 )
+                                </small>
+                        </div>
+                    </p>
+
+                     <!-- Growth Window Timepoints -->
+                     <p>
+                        <div>
+                            <label><h4>5. Growth Window Timepoints</h4></label>
+                        
+                            <input type="text" class="form-control" placeholder="0" aria-label="growth_window_timepoints" name="GrowthWindowTimepoints" id="growthwindowtimepoints">
+                            <small id="GrowthWindowTimepointsHelpBlock" class="form-text text-muted">
+                                Number of timepoints to include in growth rate calculation. 
+                                If set to 0, use all timepoints to calculate growth rate; 
+                                otherwise, report the highest growth rate for a colony that includes at least minimum_timepoint_number
+                                (enter int, default = 0, must be >=1)
+                            </small>
+                        </div>
+                    </p>
+
+                    <!-- Timepoint Spacing -->
+                    <p>
+                        <div>
+                            <label><h4>6. Timepoint Spacing</h4></label>
+                        
+                            <input type="text" class="form-control" placeholder="3600" aria-label="timepoint_spacing" name="TimepointSpacing" id="timepointspacing">
+                            <small id="TimepointSpacingHelpBlock" class="form-text text-muted">
+                                The number of seconds elapsed between each timepoint (enter int, default = 3600)
+                            </small>
+                        </div>
+                    </p>
+
+                    <hr>
+
+                    <!-- Disclaimer-->
+                    <p>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="customCheck2" name="Disclaimer">
+                            <label class="custom-control-label" for="customCheck2">
+                                "I give the Siegal lab permission to review these images and the image analysis output (optional)”
+                            </label>
+                        </div>
+                    </p>
+
+                    <!-- Collect Client Email Data-->
+                    <p>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text" id="basic-addon1">User Email(optional)</span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="" aria-label="UserEmail" name="UserEmail">
+                    </div>
+
+                    <small id="collectEmailHelpBlock" class="form-text text-muted">
+                        Why we would want this...
+                    </small>
+                    </p>
+                
+                </div>
+
+                <button type="submit" class="btn btn-primary">Run Analysis</button>
+            </form>
+
+            <hr>
+
+            <div class="link" style="width: 18rem;">
+                  <a href="https://www.biorxiv.org/content/10.1101/253724v2.full" target="_blank" class="card-link">Read Paper</a>
+                  <a href="https://github.com/Siegallab" target="_blank" class="card-link">Download Codes</a>
+            </div>
+            <br>
+    
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    // alter default submit function
+    var submitForm = document.getElementById('submit-form');
+    const images = [];
+
+    // make it alive later
+    submitForm.onsubmit = function(event) {
+        // prepare arguments
+        // send request
+        event.preventDefault(); 
+    };
+
+
+    // show the names and sizes of files selected by client (show before hitting submit button)
+    var imageListDiv = document.getElementById('image-list');
+
+    function handleFileSelect(element){
+        imageListDiv.innerHTML = "";
+
+        const files = element && element.files;
+        if (!files) return;
+        
+        [...files]
+            .filter(file => /image/i.test(file.type))
+            .forEach(_ => images.push(_));
+                
+        // order selected files
+        var moveLeft = (event, index) => {
+            imageListDiv.innerHTML = "";
+
+            if (index == 0) {
+                // removes the first element in arr and 
+                const first_img = images.shift();
+                images.push(first_img);
+            } else {
+                const tmp = images[index];
+                images[index] = images[index - 1];
+                images[index - 1] = tmp;
+            }
+
+            let idx = 0;
+            for (const image of images) {
+                showSelectedImgs(image, idx);
+                idx++;
+                }
+            
+            console.log('file moved to the left');
+            }
+
+        var moveRight = (event, index) => {
+            imageListDiv.innerHTML = "";
+
+            if (index == images.length - 1) {
+                // removes the one on index and add it in the beginning of arr
+                images.unshift(images.splice(index, 1)[0]);
+            } else {
+                // switch the position with the file on its right
+                const tmp = images[index];
+                images[index] = images[index + 1];
+                images[index + 1] = tmp;
+            }
+
+            let idx = 0;
+            for (const image of images) {
+                showSelectedImgs(image, idx);
+                idx++;
+                }
+
+            console.log('file moved to the right');
+            }
+
+        // display images selected by clients
+        function showSelectedImgs(image, index) {
+            var imageSetDiv = document.createElement('div')
+
+            const inputElement = document.createElement("div");
+            inputElement.className = '.col-md-2';
+            inputElement.innerText = `${image.name}\nsize: ${(image.size/(1024*1024)).toFixed(3)}MB`;
+            inputElement.style.backgroundColor = 'gainsboro';
+            inputElement.style.padding = '8px';
+            inputElement.style.borderRadius = '6px';
+            inputElement.style.fontSize = '15px';
+            inputElement.style.fontStyle = 'bolds';
+            inputElement.style.borderWidth = 'thin';
+            inputElement.style.borderColor = 'black';
+            inputElement.style.borderStyle = 'solid';
+            inputElement.style.width = "auto";
+            inputElement.style.textAlign = "center";
+
+            const buttonElement_left = document.createElement("button");
+            buttonElement_left.className = '.col-md-2';
+            buttonElement_left.style.backgroundColor = '#21ABCD';
+            buttonElement_left.style.padding = '2px';
+            buttonElement_left.style.borderRadius = '6px';
+            buttonElement_left.style.fontSize = '15px';
+            buttonElement_left.style.fontStyle = 'bolds';
+            buttonElement_left.style.width = '50%';
+            buttonElement_left.innerText = '<';
+            buttonElement_left.type = 'button';
+
+            const buttonElement_right = document.createElement("button");
+            buttonElement_right.className = '.col-md-2';
+            buttonElement_right.style.backgroundColor = '#21ABCD';
+            buttonElement_right.style.padding = '2px';
+            buttonElement_right.style.borderRadius = '6px';
+            buttonElement_right.style.fontSize = '15px';
+            buttonElement_right.style.fontStyle = 'bolds';
+            buttonElement_right.style.width = '50%';
+            buttonElement_right.innerText = '>';
+            buttonElement_right.type = 'button';
+            
+            const idx = index;
+            // when clicked, move element accordingly so files can be ordered properly.
+            buttonElement_left.addEventListener('click', (event) => moveLeft(event, idx));
+            buttonElement_right.addEventListener('click', (event) => moveRight(event, idx));
+
+            imageSetDiv.appendChild(inputElement);
+            imageSetDiv.appendChild(buttonElement_left);
+            imageSetDiv.appendChild(buttonElement_right);
+
+            imageListDiv.appendChild(imageSetDiv);
+        }
+
+
+        let index = 0;
+        for (const image of images) {
+            showSelectedImgs(image, index);
+            index++;
+        }
+
+        var firstFile = files && files[0];
+        if (!firstFile) return;
+
+        var fileSize = firstFile.size;
+        document.cookie = `filesize=${fileSize}`
+    }
+
+
+
+    // hide max proportion exposed edge when cleanup is not checked
+    $('#customCheck1').change(function() {
+        if (this.checked) {
+            $("#conditional_part").show();
+        } else {
+            $("#conditional_part").hide();
+        }
+    });
+
+    // change class name as image type buttons selected
+    var btn_list = Array.from($('.img-type-btn'));
+
+    var setButtons = event => {
+        // reset button styles
+        btn_list.forEach(_ => _.className = 'img-type-btn btn btn-outline-primary');
+
+        var target = event.target;
+        if (!target) return;
+
+        // set target button style
+        target.className = 'img-type-btn btn btn-primary';
+        
+        // set image type formData
+        var inputField = $('#imageTypeInput')[0];
+        inputField.value = target.id;
+    }
+
+    btn_list.forEach(element => {
+        if (!element.addEventListener) return;
+        if (typeof element.addEventListener !== 'function') return;
+        
+        element.addEventListener('click', setButtons);
+    })
+
+    // limit input value type on hole fill area to numbers and inf only
+    var limitOnlyNum = event => {
+        var target = event.target;
+        var value = target.value;
+
+        if (value === "inf") return;
+        if (value == +value) return;
+        
+        target.value = '';
+    }
+
+    $("#holefillarea")[0].addEventListener('change', limitOnlyNum);
+
+</script>
+{% endblock %}
