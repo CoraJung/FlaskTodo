@@ -227,7 +227,7 @@ def upload_image():
             file.save(save_path)
 
             # upload original input file to S3 & granting public access to s3
-            success = upload_file_s3(file_name=save_path, bucket="pie-data", object_name=unique_filename)
+            success = upload_file_s3(file_name=save_path, bucket="pie-colony-recognition-data", object_name=unique_filename)
             print("success is: ", success)
 
             # run analysis and store the processed file to S3
@@ -305,10 +305,10 @@ def process_file(input_src, object_name,
                     output_file_final = "_".join([unique_key, output_folder, input_filename, date, output_file])
 
 
-                success = upload_file_s3(file_name=output_file_path, bucket="pie-data", object_name=output_file_final)
+                success = upload_file_s3(file_name=output_file_path, bucket="pie-colony-recognition-data", object_name=output_file_final)
 
                 # get url for image file and csv file that will be rendered for client
-                bucket_name = "pie-data"
+                bucket_name = "pie-colony-recognition-data"
                 region_name = "us-east-2"
                 url_head = f"https://{bucket_name}.s3.{region_name}.amazonaws.com"
 
@@ -339,10 +339,6 @@ def process_file(input_src, object_name,
 
 @app.route('/growth-rate', methods=['GET','POST'])
 def growth_rate_upload():
-    # if request.method == "POST":
-    #     files = flask.request.files.getlist("file")
-    #     for file in files:
-    #         file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
 
     # set default values
     total_timepoint_num = 1
@@ -400,14 +396,17 @@ def growth_rate_upload():
         print("total_timepoint_num: ", total_timepoint_num)
 
         print("start uploading files to the local server")
-        for file in files:
+        for i, file in enumerate(files, start=1):
             filename = secure_filename(file.filename)
-            print(filename)
+            print("original filename: ", filename)
+            timepoint_num = "{:02}".format(i)
+            print("formatted timepoint num: ", timepoint_num)
+            filename = f't{timepoint_num}xy1.tif'
+            print("new filename: ", filename) # this is so it can work with default function
 
-            # save input image to local folder
             save_path = os.path.join(app.config["IMAGE_UPLOADS"], "gr", filename)
             file.save(save_path)
-
+        
         input_path = os.path.join(app.config["IMAGE_UPLOADS"], "gr")
         ouput_path = os.path.join(app.config["CLIENT_IMAGES"], "gr_processed")
 
@@ -418,5 +417,62 @@ def growth_rate_upload():
             timepoint_spacing=timepoint_spacing, main_channel_imagetype=main_channel_imagetype,
             growth_window_timepoints=growth_window_timepoints, total_xy_position_num=4
             )
+
+        # create a unique key to attach to original input images when they are first created.
+        unique_key = str(uuid4())
+        date = datetime.utcnow()
+        date = date.strftime("%Y-%m-%d-%H%MZ")
+        # upload input files to s3
+        upload_file_s3_gr(bucket="pie-growth-rate-data", file_type="original", path=input_path, unique_key=unique_key, date=date)
+        # upload processed files to s3
+        upload_file_s3_gr(bucket="pie-growth-rate-data", file_type="processed", path=ouput_path, unique_key=unique_key, date=date)
+        
+        return render_template("public/render_image_gr.html")
+
+def upload_file_s3_gr(file_name=None, bucket=None, object_name=None, file_type="original", path=None, unique_key=None, date=None):
+    #file_name = save_path, bucket = "pie-colony-recognition-data" or "pie-growth-rate-data", object_name = unique_filename
     
-    return render_template("public/render_image_gr.html")
+    # initiate s3 client
+    s3_client = boto3.client('s3', aws_access_key_id=app.config["AWS_ACCESS_KEY_ID"],
+                    aws_secret_access_key=app.config["AWS_SECRET_ACCESS_KEY"])
+    s3_resource = boto3.resource('s3')
+    success = False
+
+    # upload original input images to s3
+    if file_type == "original":
+        #decide the filename that will be stored in s3 and upload to s3
+        for filename in os.listdir(path): #input_path : ~~/gr
+            current_name = os.path.join(path, filename)
+
+            input_filename, file_extension = os.path.splitext(filename)
+            input_filename = input_filename + "_" + date + file_extension
+            object_name = os.path.join(unique_key, "original_input_files", input_filename) # example: 8ba5c8c0-9edf-4988-8099-d8a249c4d635/t10xy4_2020-12-23-0337Z.tif
+            print("input filename with unique key and date attached: ", object_name) 
+
+            # upload the file to the bucket
+            try:
+                mb = 1024 ** 2
+                config = TransferConfig(multipart_threshold=30*mb)
+                s3_client.upload_file(current_name, bucket, object_name, Config=config, ExtraArgs={'ACL': 'public-read'})
+
+            except ClientError as e:
+                logging.error(e)
+                # then success is still false
+            else:
+                head = s3_client.head_object(Bucket=bucket, Key=object_name)
+                success = head['ContentLength']
+
+            print("original input files are uploaded : ", success) #  if it's not False but some number, then upload successful 
+    
+    if file_type == "processed":
+        print("trying to upload processed files to s3...")
+        for (root,dirs,files) in os.walk(path, topdown=True):
+            print (root) 
+            print (dirs) 
+            print (files) 
+            print ('--------------------------------') 
+
+
+        
+
+
