@@ -36,4 +36,22 @@ hr {
   margin: 6px -2px;
 } */
 
+.alert {
+  margin-left: 80px;
+  margin-right: 115px;
+  max-width: 960px;
+  padding: 10px;
+  border-radius: 3px;
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+}
 
+.alert-error {
+  background-color: rgb(243, 99, 46);
+  color: white;
+}
+
+.alert-info {
+  background-color: yellowgreen;
+  color: black;
+}
