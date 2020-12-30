@@ -24,10 +24,14 @@
 
             <h4>Boundary Images</h4>
             <hr>
-
+            
+            <ul class="boundary_image_display">
+            {% set count = namespace(value=1) %}
             {% for img in boundary_ims_url_ls %}
-            <img src= "{{img}}" width="800">
+            <div><img src= "{{img}}" width="500">{{ count.value }}</div>
+            {% set count.value = count.value + 1 %}
             {% endfor %}
+            </ul>
 
             <!--url list to images under the unique user directory-->
             <p>Link to download processed images and csv</p>
