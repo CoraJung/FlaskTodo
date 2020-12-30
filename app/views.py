@@ -146,6 +146,7 @@ def upload_image_cr():
         return render_template("public/colony_recognition.html")
 
     if not request.files:
+        flash("⚠️ Please upload an image file", "error")
         return render_template("public/colony_recognition.html")
 
     if not allowed_image_filesize(request.cookies.get("filesize")):
