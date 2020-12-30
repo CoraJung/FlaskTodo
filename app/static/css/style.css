@@ -32,6 +32,10 @@ hr {
   margin: 0 6px;
 }
 
+.form-control {
+  width: 20%
+}
+
 /* .optional {
   margin: 6px -2px;
 } */
