@@ -1,7 +1,7 @@
 from app import app
 from flask import render_template, request, redirect, jsonify, make_response, send_from_directory, abort, url_for, flash
 from datetime import datetime
-import os, shutil
+import os
 from werkzeug.utils import secure_filename
 from PIE.image_properties import analyze_single_image
 from PIE.growth_measurement import run_default_growth_rate_analysis
@@ -12,7 +12,6 @@ from botocore.exceptions import ClientError, WaiterError
 from botocore.client import Config
 from boto3.s3.transfer import TransferConfig
 import botocore
-import re
 import pandas as pd
 
 @app.template_filter("clean_date")
@@ -265,11 +264,12 @@ def upload_image_gr():
     for i, file in enumerate(files, start=1):
         filename = secure_filename(file.filename)
         _, extension = os.path.splitext(filename)
+        print("extension: ", extension)
 
         print("original filename: ", filename)
         timepoint_num = "{:02}".format(i)
         print("formatted timepoint num: ", timepoint_num)
-        filename = f't{timepoint_num}xy1.{extension}'
+        filename = f't{timepoint_num}xy1{extension}'
         print("new filename: ", filename) # this is so it can work with default function
 
         save_path = os.path.join(app.config["IMAGE_UPLOADS"], "gr", filename)
@@ -318,30 +318,36 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
 
     if file_type == "original":
         #decide the filename that will be stored in s3 and upload to s3
-        for filename in os.listdir(path): #path : ~~/gr or ~~/cr
-            current_name = os.path.join(path, filename)
 
-            input_filename, file_extension = os.path.splitext(filename)
-            input_filename = input_filename + "_" + date + file_extension
-            object_name = os.path.join(unique_key, "original_input_file(s)", input_filename) # example: 8ba5c8c0-9edf-4988-8099-d8a249c4d635/original_input_file(s)/t10xy4_2020-12-23-0337Z.tif
-            print("input filename with unique key and date attached: ", object_name) 
-            
-            # upload the file to the bucket
-            try:
-                mb = 1024 ** 2
-                config = TransferConfig(multipart_threshold=30*mb)
-                s3_client.upload_file(current_name, bucket, object_name, Config=config, ExtraArgs={'ACL': 'public-read'})
+        for root, dirs, files in os.walk(path, topdown=True): #path : ~~/gr or ~~/cr
+            for filename in files:
+                if filename and filename != ".DS_Store":
+                    current_name = os.path.join(root, filename)
+                    
+                    print(f"-----------filename: {filename}-------------------")
+                    input_filename, file_extension = os.path.splitext(filename)
+                    print(f"-----------input filename: {input_filename}-------------------")
+                    input_filename = input_filename + "_" + date + file_extension
+                    print(f"-----------updated input filename: {input_filename}-------------------")
+                    object_name = os.path.join(unique_key, "original_input_file(s)", input_filename) # example: 8ba5c8c0-9edf-4988-8099-d8a249c4d635/original_input_file(s)/t10xy4_2020-12-23-0337Z.tif
+                    print("input filename with unique key and date attached: ", object_name) 
+                    
+                    # upload the file to the bucket
+                    try:
+                        mb = 1024 ** 2
+                        config = TransferConfig(multipart_threshold=30*mb)
+                        s3_client.upload_file(current_name, bucket, object_name, Config=config, ExtraArgs={'ACL': 'public-read'})
 
-            except ClientError as e:
-                logging.error(e)
-                # then success is still false
-            else:
-                head = s3_client.head_object(Bucket=bucket, Key=object_name)
-                success = head['ContentLength']
+                    except ClientError as e:
+                        logging.error(e)
+                        # then success is still false
+                    else:
+                        head = s3_client.head_object(Bucket=bucket, Key=object_name)
+                        success = head['ContentLength']
 
-            print(f"original input file {filename} is uploaded : ", success) #  if it's not False but some number, then upload successful 
-            os.remove(current_name)
-            print(f"original input file {filename} is deleted from local server")
+                    print(f"original input file {filename} is uploaded : ", success) #  if it's not False but some number, then upload successful 
+                    os.remove(current_name)
+                    print(f"original input file {filename} is deleted from local server")
 
 
     if file_type == "processed":
@@ -415,7 +421,7 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
 
         if folder_name == "gr_processed":
             url_ls = url_ls + boundary_ims_url_ls
-            url_ls.sort()
+            boundary_ims_url_ls.sort()
 
             return boundary_ims_url_ls, url_ls, dfs_to_render_ls, movie_url
 
