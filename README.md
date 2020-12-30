@@ -3,12 +3,14 @@ This is a PIE web application using Python Flask framework and AWS S3 storage se
 
 ## 1. Install All Required Dependencies
 
-- `python 3.7`
-- `boto3 1.9.66`
-- `pandas 1.2.0`
-- `numpy 1.19.4`
-- `r-uuid 0.1_4`
-- `flask 1.1.2`
+```
+python 3.7
+boto3 1.9.66
+pandas 1.2.0
+numpy 1.19.4
+r-uuid 0.1_4
+flask 1.1.2
+```
 
 ## 2. Start Web Server 
 I recommend running it under development environment first, so you can find any possible bugs.
