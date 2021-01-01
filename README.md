@@ -30,27 +30,27 @@ If you run it locally, the app should be running at http://127.0.0.1:5000/
 First, client uploads a single image (colony recognition page) or multiple images (growth rate analysis).
 The default parameters are set as:
 
-**Colony Recognition **
+**Colony Recognition**
 
 ```
-- hole_fill_area=np.inf
-- cleanup=False
-- max_proportion_exposed_edge=0.25
-- save_extra_info=True
-- image_type="brightfield"
+  - hole_fill_area=np.inf
+  - cleanup=False
+  - max_proportion_exposed_edge=0.25
+  - save_extra_info=True
+  - image_type="brightfield"
 ```
 
 **Growth Rate**
 
 ```
-- total_timepoint_num = 1
-- hole_fill_area = np.inf
-- cleanup = False
-- max_proportion_exposed_edge = 0.75
-- minimum_growth_time = 4
-- timepoint_spacing = 3600
-- main_channel_imagetype = 'brightfield'
-- growth_window_timepoints = 0
+  - total_timepoint_num = 1
+  - hole_fill_area = np.inf
+  - cleanup = False
+  - max_proportion_exposed_edge = 0.75
+  - minimum_growth_time = 4
+  - timepoint_spacing = 3600
+  - main_channel_imagetype = 'brightfield'
+  - growth_window_timepoints = 0
 ```
 
 2. The app receives POST request, then it goes through series of verficiations such as filesize, file extensions, file existence, etc.
