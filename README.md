@@ -74,5 +74,5 @@ date=<date>
 After images and files are uploaded to S3, the files in the local server are removed.
 
 ### 6. Results for the clients
-The client can see the results of the analysis in the new page (either `render_image.html` or `render_image_gr.html`), and will be given the urls to S3 bucket to download the processed files.
+The client can see the results of the analysis in the new page (either `render_image.html` for colony recognition analysis result or `render_image_gr.html` for growth rate analysis result), and will be given the urls to S3 bucket to download the processed files.
 
