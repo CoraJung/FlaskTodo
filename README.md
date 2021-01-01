@@ -1,5 +1,6 @@
 # pie-flask
-This is a PIE web application using Python Flask framework and AWS S3 storage service. This app is used to demontrate a colony recognition algorithm that takes a single microbial cell growth image and a growth rate analysis algorithm that takes multiple images. The app is deployed on NYU Brooklyn Research Cluster. Make sure [PIE]() is installed in the environment (same directory as where app is). I also didn't include config.py in this repo due to AWS credentials exposure issue, so mkae sure to make one to point to where the client images and processed images are stored.
+This is a PIE web application using Python Flask framework and AWS S3 storage service. You can take a look at the app by visiting [here](http://128.122.217.86/) with NYU VPN on.
+This app is used to demontrate a colony recognition algorithm that takes a single microbial cell growth image and a growth rate analysis algorithm that takes multiple images. The app is deployed on NYU Brooklyn Research Cluster. Make sure [PIE]() is installed in the environment (same directory as where app is). I also didn't include config.py in this repo due to AWS credentials exposure issue, so mkae sure to make one to point to where the client images and processed images are stored.
 
 ## 1. Install All Required Dependencies
 
