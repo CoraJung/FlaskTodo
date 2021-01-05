@@ -285,13 +285,15 @@ def upload_image_gr():
     input_path, output_path = make_io_dirs("gr", unique_key)
 
     print("start uploading files to the local server")
+    time_digit_num = np.ceil(np.log10(len(files)+1)).astype(int)
     for i, file in enumerate(files, start=1):
         filename = secure_filename(file.filename)
         _, extension = os.path.splitext(filename)
         print("extension: ", extension)
 
         print("original filename: ", filename)
-        timepoint_num = "{:02}".format(i)
+        
+        timepoint_num = '{:0>{}d}'.format(i, time_digit_num)
         print("formatted timepoint num: ", timepoint_num)
         filename = f't{timepoint_num}xy1{extension}'
         print("new filename: ", filename) # this is so it can work with default function
