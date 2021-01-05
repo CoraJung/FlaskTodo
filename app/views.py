@@ -104,6 +104,26 @@ def make_file_name(filename):
     unique_key = str(uuid4())
     object_name = unique_key + "/" + object_name
 
+def make_io_dirs(analysis_code, unique_key):
+    # create and return input/output directories
+    input_path = \
+        os.path.join(
+            app.config["IMAGE_UPLOADS"],
+            str(analysis_code),
+            unique_key
+            )
+    output_path = \
+        os.path.join(
+            app.config["CLIENT_IMAGES"],
+            str(analysis_code)+"_processed",
+            unique_key
+            )
+    if not os.path.exists(input_path):
+        os.makedirs(input_path)
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    return(input_path, output_path)
+
 
 @app.route("/colony-recognition", methods=["GET", "POST"])
 
@@ -175,14 +195,13 @@ def upload_image_cr():
         for file in files:
             filename = secure_filename(file.filename)
             _, file_extension = os.path.splitext(filename)
-            filename = f't1xy1.{file_extension}'
+            filename = f't1xy1{file_extension}'
             
             # save input image to local folder
-            save_path = os.path.join(app.config["IMAGE_UPLOADS"], "cr", filename)
+            input_path, output_path = make_io_dirs("cr", unique_key)
+            save_path = os.path.join(input_path, filename)
             file.save(save_path)
 
-            input_path = os.path.join(app.config["IMAGE_UPLOADS"], "cr")
-            output_path = os.path.join(app.config["CLIENT_IMAGES"], "cr_processed") # /Users/hyunjung/Projects/FlaskProject/app/static/client/img/cr_processed
             # run analysis 
             colony_mask, colony_property_df = analyze_single_image(
                 hole_fill_area=hole_fill_area, cleanup=cleanup, max_proportion_exposed_edge=max_proportion_exposed_edge,
@@ -190,14 +209,14 @@ def upload_image_cr():
             flash("File(s) successfully analyzed", "info")
 
             # create a unique key to attach to original input images when they are first created.
-            unique_key = str(uuid4())
+            unique_file_key = str(uuid4())
             date = datetime.utcnow()
             date = date.strftime("%Y-%m-%d-%H%MZ")
 
             # upload input files to s3
-            upload_file_s3(bucket="pie-colony-recognition-data", file_type="original", folder_name="cr_processed", path=input_path, unique_key=unique_key, date=date)
+            upload_file_s3(bucket="pie-colony-recognition-data", file_type="original", folder_name="cr_processed", path=input_path, unique_key=unique_file_key, date=date)
             # upload processed files to s3
-            boundary_im_url, url_ls, df_to_render = upload_file_s3(bucket="pie-colony-recognition-data", file_type="processed", folder_name="cr_processed", path=output_path, unique_key=unique_key, date=date)
+            boundary_im_url, url_ls, df_to_render = upload_file_s3(bucket="pie-colony-recognition-data", file_type="processed", folder_name="cr_processed", path=output_path, unique_key=unique_file_key, date=date)
             flash("File(s) successfully uploaded", "info")
 
             return render_template("public/render_image.html", boundary_im_url=boundary_im_url, url_ls=url_ls, column_names=df_to_render.columns.values,
@@ -261,6 +280,10 @@ def upload_image_gr():
     total_timepoint_num = len(files)
     print("total_timepoint_num: ", total_timepoint_num)
 
+    # create a unique key to attach to input images when they are first created.
+    unique_key = str(uuid4())
+    input_path, output_path = make_io_dirs("gr", unique_key)
+
     print("start uploading files to the local server")
     for i, file in enumerate(files, start=1):
         filename = secure_filename(file.filename)
@@ -273,12 +296,9 @@ def upload_image_gr():
         filename = f't{timepoint_num}xy1{extension}'
         print("new filename: ", filename) # this is so it can work with default function
 
-        save_path = os.path.join(app.config["IMAGE_UPLOADS"], "gr", filename)
+        save_path = os.path.join(input_path, filename)
         file.save(save_path)
     
-    input_path = os.path.join(app.config["IMAGE_UPLOADS"], "gr")
-    ouput_path = os.path.join(app.config["CLIENT_IMAGES"], "gr_processed")
-
     print("run growth rate analysis")
     run_default_growth_rate_analysis(input_path=input_path, output_path=ouput_path,
         total_timepoint_num=total_timepoint_num, hole_fill_area=hole_fill_area, cleanup=cleanup,
@@ -287,8 +307,6 @@ def upload_image_gr():
         growth_window_timepoints=growth_window_timepoints, total_xy_position_num=4
         )
 
-    # create a unique key to attach to original input images when they are first created.
-    unique_key = str(uuid4())
     date = datetime.utcnow()
     date = date.strftime("%Y-%m-%d-%H%MZ")
     # upload input files to s3
