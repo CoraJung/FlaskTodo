@@ -302,7 +302,7 @@ def upload_image_gr():
         file.save(save_path)
     
     print("run growth rate analysis")
-    run_default_growth_rate_analysis(input_path=input_path, output_path=ouput_path,
+    run_default_growth_rate_analysis(input_path=input_path, output_path=output_path,
         total_timepoint_num=total_timepoint_num, hole_fill_area=hole_fill_area, cleanup=cleanup,
         max_proportion_exposed_edge=max_proportion_exposed_edge, minimum_growth_time=minimum_growth_time,
         timepoint_spacing=timepoint_spacing, main_channel_imagetype=main_channel_imagetype,
@@ -316,7 +316,7 @@ def upload_image_gr():
         path=input_path, unique_key=unique_key, date=date)
     # upload processed files to s3
     boundary_ims_url_ls, url_ls, dfs_to_render_ls, movie_url = upload_file_s3(bucket="pie-growth-rate-data", 
-        file_type="processed", folder_name="gr_processed", path=ouput_path, unique_key=unique_key, date=date)
+        file_type="processed", folder_name="gr_processed", path=output_path, unique_key=unique_key, date=date)
 
     return render_template("public/render_image_gr.html", boundary_ims_url_ls=boundary_ims_url_ls, url_ls=url_ls, column_names_grcombined=dfs_to_render_ls[0].columns.values,
                                                         column_names_cpcombined=dfs_to_render_ls[1].columns.values, row_data_grcombined=list(dfs_to_render_ls[0].values.tolist()), 
