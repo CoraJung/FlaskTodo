@@ -13,6 +13,7 @@ from botocore.client import Config
 from boto3.s3.transfer import TransferConfig
 import botocore
 import pandas as pd
+import shutil
 
 @app.template_filter("clean_date")
 def clean_date(dt):
@@ -124,6 +125,38 @@ def make_io_dirs(analysis_code, unique_key):
         os.makedirs(output_path)
     return(input_path, output_path)
 
+def save_data(review_permission, analysis_code, input_path, output_path, user_email):
+    # if review_permission is true, copies input and output path into 
+    # folder for data to be kept
+    # otherwise deletes intput and output paths
+    if review_permission:
+        keepdir_in = \
+            os.path.join(
+                app.config["KEEPDIR_IN"],
+                str(analysis_code)
+                )
+        keepdir_out = \
+            os.path.join(
+                app.config["KEEPDIR_OUT"],
+                str(analysis_code)
+                )
+        if not os.path.exists(keepdir_in):
+            os.makedirs(keepdir_in)
+        if not os.path.exists(keepdir_out):
+            os.makedirs(keepdir_out)
+        keepdir_in_full = shutil.move(input_path, keepdir_in)
+        keepdir_out_full = shutil.move(output_path, keepdir_out)
+        # if user_email isn't empty, write file with it to both in and 
+        # out directories
+        if user_email != "":
+            for folder in [keepdir_in_full, keepdir_out_full]:
+                email_file_path = os.path.join(folder, 'user_email.txt')
+                with open(email_file_path, "w") as email_file:
+                    email_file.write(str(user_email))
+    else:
+        shutil.rmtree(input_path)
+        shutil.rmtree(output_path)
+
 
 @app.route("/colony-recognition", methods=["GET", "POST"])
 
@@ -191,14 +224,14 @@ def upload_image_cr():
             return redirect(request.url)
         # create a unique key to attach to original input image when it was first created.
         unique_key = str(uuid4())
+        # save input image to local folder
+        input_path, output_path = make_io_dirs("cr", unique_key)
 
         for file in files:
             filename = secure_filename(file.filename)
             _, file_extension = os.path.splitext(filename)
             filename = f't1xy1{file_extension}'
             
-            # save input image to local folder
-            input_path, output_path = make_io_dirs("cr", unique_key)
             save_path = os.path.join(input_path, filename)
             file.save(save_path)
 
@@ -219,10 +252,14 @@ def upload_image_cr():
             boundary_im_url, url_ls, df_to_render = upload_file_s3(bucket="pie-colony-recognition-data", file_type="processed", folder_name="cr_processed", path=output_path, unique_key=unique_file_key, date=date)
             flash("File(s) successfully uploaded", "info")
 
-            return render_template("public/render_image.html", boundary_im_url=boundary_im_url, url_ls=url_ls, column_names=df_to_render.columns.values,
-                                    row_data=list(df_to_render.values.tolist()), zip=zip)                
+            # delete input-output directories if no permission to keep 
+            # them, move them if permission granted
+            save_data(review_permission, 'cr', input_path, output_path, user_email)
 
-    return render_template("public/colony_recognition.html")
+            return render_template("public/render_image.html", boundary_im_url=boundary_im_url, url_ls=url_ls, column_names=df_to_render.columns.values,
+                                    row_data=list(df_to_render.values.tolist()), zip=zip)
+
+#    return render_template("public/colony_recognition.html")
 
 @app.route('/growth-rate', methods=['GET','POST'])
 def upload_image_gr():
@@ -318,10 +355,14 @@ def upload_image_gr():
     boundary_ims_url_ls, url_ls, dfs_to_render_ls, movie_url = upload_file_s3(bucket="pie-growth-rate-data", 
         file_type="processed", folder_name="gr_processed", path=output_path, unique_key=unique_key, date=date)
 
+    # delete input-output directories if no permission to keep 
+    # them, move them if permission granted
+    save_data(review_permission, 'gr', input_path, output_path, user_email)
+
     return render_template("public/render_image_gr.html", boundary_ims_url_ls=boundary_ims_url_ls, url_ls=url_ls, column_names_grcombined=dfs_to_render_ls[0].columns.values,
                                                         column_names_cpcombined=dfs_to_render_ls[1].columns.values, row_data_grcombined=list(dfs_to_render_ls[0].values.tolist()), 
                                                         row_data_cpcombined=list(dfs_to_render_ls[1].values.tolist()), movie_url=movie_url, zip=zip)
-    
+
 
 def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed", path=None, unique_key=None, date=None):
     #file_name = save_path, bucket = "pie-colony-recognition-data" or "pie-growth-rate-data", object_name = unique_filename
@@ -367,8 +408,6 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
                         success = head['ContentLength']
 
                     print(f"original input file {filename} is uploaded : ", success) #  if it's not False but some number, then upload successful 
-                    os.remove(current_name)
-                    print(f"original input file {filename} is deleted from local server")
 
 
     if file_type == "processed":
@@ -434,10 +473,7 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
                         if "single_im_colony_properties" in root:
                             df_to_render = pd.read_csv(current_name)
                     
-                    if success:
-                        os.remove(current_name)
-                        print(f"processed file {filename} is deleted from local server")
-                    else:
+                    if not success:
                         abort(404)
 
         if folder_name == "gr_processed":
