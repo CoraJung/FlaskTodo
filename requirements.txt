@@ -1,195 +1,47 @@
-anaconda-client==1.7.2
-anaconda-navigator==1.9.12
-appnope==0.1.0
-argon2-cffi @ file:///opt/concourse/worker/volumes/live/c4db8eed-7de0-4d68-400c-2ea7e21d3750/volume/argon2-cffi_1596828478065/work
-attrs @ file:///tmp/build/80754af9/attrs_1598374659300/work
-Automat==0.8.0
-backcall==0.2.0
-backports.functools-lru-cache==1.6.1
-backports.tempfile==1.0
-backports.weakref==1.0.post1
-bcrypt @ file:///opt/concourse/worker/volumes/live/25966884-1a49-4448-62e7-44563eba29d2/volume/bcrypt_1597936171818/work
-beautifulsoup4==4.9.1
-bleach==3.1.5
-boto3==1.13.15
-botocore==1.16.15
+boto3 @ file:///tmp/build/80754af9/boto3_1603222673683/work
+botocore @ file:///tmp/build/80754af9/botocore_1603297996270/work
 brotlipy==0.7.0
-certifi==2020.11.8
-cffi==1.14.0
-chardet==3.0.4
+certifi==2020.6.20
+cffi @ file:///tmp/build/80754af9/cffi_1600699146221/work
 click==7.1.2
-clyent==1.2.2
-colorama==0.4.4
-conda==4.9.2
-conda-build==3.18.11
-conda-package-handling==1.7.0
-conda-verify==3.4.2
-configparser==5.0.0
-constantly==15.1.0
-convertdate @ file:///home/conda/feedstock_root/build_artifacts/convertdate_1605102623033/work
-crayons==0.4.0
-cryptography @ file:///opt/concourse/worker/volumes/live/823033e5-92f5-43de-539e-bdc7bc36c81a/volume/cryptography_1598892026131/work
-cssselect==1.1.0
+cryptography @ file:///tmp/build/80754af9/cryptography_1601046815590/work
 cycler==0.10.0
-Cython @ file:///Users/runner/miniforge3/conda-bld/cython_1602367306370/work
-decorator==4.4.2
-defusedxml==0.6.0
 descartes==1.1.0
-dill @ file:///home/conda/feedstock_root/build_artifacts/dill_1592315758554/work
 docutils==0.15.2
-entrypoints==0.3
-ephem @ file:///Users/runner/miniforge3/conda-bld/ephem_1602326527313/work
-fake-useragent==0.1.11
-fbprophet @ file:///Users/runner/miniforge3/conda-bld/fbprophet_1599365544983/work
-filelock==3.0.12
-flake8==3.8.3
-flake8-polyfill==1.0.2
-flake8-quotes @ file:///home/conda/feedstock_root/build_artifacts/flake8-quotes_1589330264223/work
 Flask==1.1.2
-future==0.18.2
-glob2==0.7
-gpytorch @ file:///home/conda/feedstock_root/build_artifacts/gpytorch_1598876572856/work
-hmmlearn @ file:///Users/runner/miniforge3/conda-bld/hmmlearn_1604245822938/work
-holidays @ file:///home/conda/feedstock_root/build_artifacts/holidays_1595448845196/work
-hyperlink==19.0.0
 idna @ file:///tmp/build/80754af9/idna_1593446292537/work
-importlib-metadata @ file:///opt/concourse/worker/volumes/live/84197498-cbc0-4436-7ce0-03c4490b7a28/volume/importlib-metadata_1593446431408/work
-incremental==17.5.0
-iniconfig @ file:///tmp/build/80754af9/iniconfig_1596827328212/work
-ipykernel @ file:///opt/concourse/worker/volumes/live/73e8766c-12c3-4f76-62a6-3dea9a7da5b7/volume/ipykernel_1596206701501/work/dist/ipykernel-5.3.4-py3-none-any.whl
-ipython @ file:///opt/concourse/worker/volumes/live/8b2619db-8f13-4b24-7934-1d6641993758/volume/ipython_1598371577454/work
-ipython-genutils==0.2.0
-ipywidgets==7.5.1
 itsdangerous==1.1.0
-jedi @ file:///opt/concourse/worker/volumes/live/152cd167-7b79-4fbd-5c97-d7b338805c2b/volume/jedi_1598371617305/work
 Jinja2==2.11.2
-jmespath==0.10.0
-joblib @ file:///tmp/build/80754af9/joblib_1594236160679/work
-json5==0.9.5
-jsonschema==3.2.0
-jupyter==1.0.0
-jupyter-client @ file:///tmp/build/80754af9/jupyter_client_1594826976318/work
-jupyter-console @ file:///tmp/build/80754af9/jupyter_console_1598884538475/work
-jupyter-core==4.6.3
-jupyterlab==2.2.6
-jupyterlab-server @ file:///tmp/build/80754af9/jupyterlab_server_1594164409481/work
-kiwisolver==1.2.0
-korean-lunar-calendar @ file:///home/conda/feedstock_root/build_artifacts/korean_lunar_calendar_1589354365811/work
-libarchive-c==2.9
-LunarCalendar==0.0.9
-lxml==4.5.1
+jmespath @ file:///tmp/build/80754af9/jmespath_1594304593830/work
+joblib==1.0.0
+kiwisolver==1.3.1
 MarkupSafe==1.1.1
-matlabengineforpython===R2019b
-matplotlib==3.1.3
-mccabe==0.6.1
-mistune==0.8.4
+matplotlib==3.3.3
 mizani==0.7.2
-mkl-fft==1.1.0
+mkl-fft==1.2.0
 mkl-random==1.1.1
 mkl-service==2.3.0
-more-itertools @ file:///tmp/build/80754af9/more-itertools_1598884071673/work
-multiprocess @ file:///Users/runner/miniforge3/conda-bld/multiprocess_1592290940884/work
-navigator-updater==0.2.1
-nbconvert==5.6.1
-nbformat==5.0.7
-notebook @ file:///opt/concourse/worker/volumes/live/4befab56-a4d7-490d-6835-d3c47a466e66/volume/notebook_1596838669687/work
-numpy @ file:///opt/concourse/worker/volumes/live/40d975a3-7e82-44c8-53df-feccdbce8b96/volume/numpy_and_numpy_base_1596233859108/work
+numpy @ file:///tmp/build/80754af9/numpy_and_numpy_base_1603570489231/work
 olefile==0.46
-opencv-contrib-python==4.2.0.34
-packaging==20.4
+opencv-contrib-python==4.5.1.48
 palettable==3.3.0
-pandas @ file:///opt/concourse/worker/volumes/live/993437e5-6177-49a4-48b9-0912ecc50f00/volume/pandas_1598371475214/work
-pandocfilters==1.4.2
-parsel==1.5.2
-parso==0.7.0
+pandas==1.2.0
 patsy==0.5.1
-pdf2image @ file:///home/conda/feedstock_root/build_artifacts/pdf2image_1588278609827/work
-pdfkit==0.6.1
-pdfminer.six @ file:///home/conda/feedstock_root/build_artifacts/pdfminer.six_1589792552472/work
-pep8-naming==0.8.2
-pexpect==4.8.0
-pickleshare==0.7.5
--e git+git@github.com:Siegallab/PIE.git@97c917dc748f5b20dc547efcaf145f7e2004b452#egg=PIE
-Pillow @ file:///opt/concourse/worker/volumes/live/05b3bc99-cf9f-44f2-42cf-267ed3a55922/volume/pillow_1594307311725/work
-pkginfo==1.5.0.1
+-e git+https://github.com/Siegallab/PIE.git@5692a5478225b4f8dc2078916aae29cb54906b8b#egg=PIE
+Pillow @ file:///tmp/build/80754af9/pillow_1602788711040/work
 plotnine==0.7.1
-pluggy==0.13.1
-prometheus-client==0.8.0
-prompt-toolkit @ file:///tmp/build/80754af9/prompt-toolkit_1598885458782/work
-Protego @ file:///tmp/build/80754af9/protego_1598657180827/work
-psutil @ file:///opt/concourse/worker/volumes/live/abb7a219-3a4a-4ff9-4158-148060faae29/volume/psutil_1598370243710/work
-ptyprocess==0.6.0
-py @ file:///tmp/build/80754af9/py_1593446248552/work
-py4j==0.10.7
-pyarrow==0.15.1
-pyasn1==0.4.8
-pyasn1-modules==0.2.7
-pycodestyle==2.6.0
-pycosat==0.6.3
+pyarrow==2.0.0
 pycparser @ file:///tmp/build/80754af9/pycparser_1594388511720/work
-pycryptodome==3.9.7
-PyDispatcher==2.0.5
-pydse==0.2.1
-pyflakes==2.2.0
-Pygments==2.6.1
-PyHamcrest @ file:///tmp/build/80754af9/pyhamcrest_1594390921726/work
-pykalman==0.9.5
-PyMeeus @ file:///home/conda/feedstock_root/build_artifacts/pymeeus_1589222711601/work
 pyOpenSSL @ file:///tmp/build/80754af9/pyopenssl_1594392929924/work
 pyparsing==2.4.7
-PyPDF2==1.26.0
-pyrsistent==0.16.0
 PySocks==1.7.1
-pyspark==2.4.5
-pystan==2.19.0.0
-pytesseract @ file:///home/conda/feedstock_root/build_artifacts/pytesseract_1595706146411/work
-pytest==6.0.1
-pytest-runner==5.2
 python-dateutil==2.8.1
-python-dotenv==0.13.0
-pytz==2020.1
-PyYAML==5.3.1
-pyzmq==17.1.2
-qtconsole @ file:///tmp/build/80754af9/qtconsole_1598374667791/work
-QtPy==1.9.0
-queuelib==1.5.0
-requests @ file:///tmp/build/80754af9/requests_1592841827918/work
-ruamel-yaml==0.15.87
+pytz @ file:///tmp/build/80754af9/pytz_1608922264688/work
 s3transfer==0.3.3
 scikit-learn==0.24.0
-scipy==1.4.1
-Scrapy @ file:///usr/local/miniconda/conda-bld/scrapy_1590508515466/work
-seaborn==0.10.0
-selenium==3.141.0
-Send2Trash==1.5.0
-service-identity==18.1.0
-six==1.15.0
-sortedcontainers==2.2.2
-SoundFile==0.10.2
-soupsieve==2.0.1
-SQLAlchemy==1.3.17
-statsmodels @ file:///Users/runner/miniforge3/conda-bld/statsmodels_1598551227524/work
-tabula-py==1.4.1
-tabulate==0.8.3
-terminado==0.8.3
-testpath==0.4.4
-TextGrid==1.5
+scipy==1.6.0
+six @ file:///tmp/build/80754af9/six_1605205327372/work
+statsmodels==0.12.1
 threadpoolctl==2.1.0
-toml @ file:///tmp/build/80754af9/toml_1592853716807/work
-torch==1.6.0
-torchaudio==0.6.0a0+f17ae39
-torchvision==0.7.0
-tornado==5.1.1
-tqdm @ file:///tmp/build/80754af9/tqdm_1596810128862/work
-traitlets==4.3.3
-Twisted==20.3.0
-urllib3 @ file:///tmp/build/80754af9/urllib3_1597086586889/work
-w3lib==1.21.0
-wcwidth @ file:///tmp/build/80754af9/wcwidth_1593447189090/work
-webdriver-manager==3.2.2
-webencodings==0.5.1
+urllib3 @ file:///tmp/build/80754af9/urllib3_1603305693037/work
 Werkzeug==1.0.1
-widgetsnbextension==3.5.1
-xmltodict==0.12.0
-zipp==3.1.0
-zope.interface @ file:///opt/concourse/worker/volumes/live/41faf7df-11ec-40ce-5d80-a5a7f861af0c/volume/zope.interface_1598624148874/work
