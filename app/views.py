@@ -13,6 +13,7 @@ from botocore.client import Config
 from boto3.s3.transfer import TransferConfig
 import botocore
 import pandas as pd
+import shutil
 
 @app.template_filter("clean_date")
 def clean_date(dt):
@@ -104,6 +105,58 @@ def make_file_name(filename):
     unique_key = str(uuid4())
     object_name = unique_key + "/" + object_name
 
+def make_io_dirs(analysis_code, unique_key):
+    # create and return input/output directories
+    input_path = \
+        os.path.join(
+            app.config["IMAGE_UPLOADS"],
+            str(analysis_code),
+            unique_key
+            )
+    output_path = \
+        os.path.join(
+            app.config["CLIENT_IMAGES"],
+            str(analysis_code)+"_processed",
+            unique_key
+            )
+    if not os.path.exists(input_path):
+        os.makedirs(input_path)
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    return(input_path, output_path)
+
+def save_data(review_permission, analysis_code, input_path, output_path, user_email):
+    # if review_permission is true, copies input and output path into 
+    # folder for data to be kept
+    # otherwise deletes intput and output paths
+    if review_permission:
+        keepdir_in = \
+            os.path.join(
+                app.config["KEEPDIR_IN"],
+                str(analysis_code)
+                )
+        keepdir_out = \
+            os.path.join(
+                app.config["KEEPDIR_OUT"],
+                str(analysis_code)
+                )
+        if not os.path.exists(keepdir_in):
+            os.makedirs(keepdir_in)
+        if not os.path.exists(keepdir_out):
+            os.makedirs(keepdir_out)
+        keepdir_in_full = shutil.move(input_path, keepdir_in)
+        keepdir_out_full = shutil.move(output_path, keepdir_out)
+        # if user_email isn't empty, write file with it to both in and 
+        # out directories
+        if user_email != "":
+            for folder in [keepdir_in_full, keepdir_out_full]:
+                email_file_path = os.path.join(folder, 'user_email.txt')
+                with open(email_file_path, "w") as email_file:
+                    email_file.write(str(user_email))
+    else:
+        shutil.rmtree(input_path)
+        shutil.rmtree(output_path)
+
 
 @app.route("/colony-recognition", methods=["GET", "POST"])
 
@@ -171,18 +224,17 @@ def upload_image_cr():
             return redirect(request.url)
         # create a unique key to attach to original input image when it was first created.
         unique_key = str(uuid4())
+        # save input image to local folder
+        input_path, output_path = make_io_dirs("cr", unique_key)
 
         for file in files:
             filename = secure_filename(file.filename)
             _, file_extension = os.path.splitext(filename)
-            filename = f't1xy1.{file_extension}'
+            filename = f't1xy1{file_extension}'
             
-            # save input image to local folder
-            save_path = os.path.join(app.config["IMAGE_UPLOADS"], "cr", filename)
+            save_path = os.path.join(input_path, filename)
             file.save(save_path)
 
-            input_path = os.path.join(app.config["IMAGE_UPLOADS"], "cr")
-            output_path = os.path.join(app.config["CLIENT_IMAGES"], "cr_processed") # /Users/hyunjung/Projects/FlaskProject/app/static/client/img/cr_processed
             # run analysis 
             colony_mask, colony_property_df = analyze_single_image(
                 hole_fill_area=hole_fill_area, cleanup=cleanup, max_proportion_exposed_edge=max_proportion_exposed_edge,
@@ -190,20 +242,24 @@ def upload_image_cr():
             flash("File(s) successfully analyzed", "info")
 
             # create a unique key to attach to original input images when they are first created.
-            unique_key = str(uuid4())
+            unique_file_key = str(uuid4())
             date = datetime.utcnow()
             date = date.strftime("%Y-%m-%d-%H%MZ")
 
             # upload input files to s3
-            upload_file_s3(bucket="pie-colony-recognition-data", file_type="original", folder_name="cr_processed", path=input_path, unique_key=unique_key, date=date)
+            upload_file_s3(bucket="pie-colony-recognition-data", file_type="original", folder_name="cr_processed", path=input_path, unique_key=unique_file_key, date=date)
             # upload processed files to s3
-            boundary_im_url, url_ls, df_to_render = upload_file_s3(bucket="pie-colony-recognition-data", file_type="processed", folder_name="cr_processed", path=output_path, unique_key=unique_key, date=date)
+            boundary_im_url, url_ls, df_to_render = upload_file_s3(bucket="pie-colony-recognition-data", file_type="processed", folder_name="cr_processed", path=output_path, unique_key=unique_file_key, date=date)
             flash("File(s) successfully uploaded", "info")
 
-            return render_template("public/render_image.html", boundary_im_url=boundary_im_url, url_ls=url_ls, column_names=df_to_render.columns.values,
-                                    row_data=list(df_to_render.values.tolist()), zip=zip)                
+            # delete input-output directories if no permission to keep 
+            # them, move them if permission granted
+            save_data(review_permission, 'cr', input_path, output_path, user_email)
 
-    return render_template("public/colony_recognition.html")
+            return render_template("public/render_image.html", boundary_im_url=boundary_im_url, url_ls=url_ls, column_names=df_to_render.columns.values,
+                                    row_data=list(df_to_render.values.tolist()), zip=zip)
+
+#    return render_template("public/colony_recognition.html")
 
 @app.route('/growth-rate', methods=['GET','POST'])
 def upload_image_gr():
@@ -261,34 +317,35 @@ def upload_image_gr():
     total_timepoint_num = len(files)
     print("total_timepoint_num: ", total_timepoint_num)
 
+    # create a unique key to attach to input images when they are first created.
+    unique_key = str(uuid4())
+    input_path, output_path = make_io_dirs("gr", unique_key)
+
     print("start uploading files to the local server")
+    time_digit_num = np.ceil(np.log10(len(files)+1)).astype(int)
     for i, file in enumerate(files, start=1):
         filename = secure_filename(file.filename)
         _, extension = os.path.splitext(filename)
         print("extension: ", extension)
 
         print("original filename: ", filename)
-        timepoint_num = "{:02}".format(i)
+        
+        timepoint_num = '{:0>{}d}'.format(i, time_digit_num)
         print("formatted timepoint num: ", timepoint_num)
         filename = f't{timepoint_num}xy1{extension}'
         print("new filename: ", filename) # this is so it can work with default function
 
-        save_path = os.path.join(app.config["IMAGE_UPLOADS"], "gr", filename)
+        save_path = os.path.join(input_path, filename)
         file.save(save_path)
     
-    input_path = os.path.join(app.config["IMAGE_UPLOADS"], "gr")
-    ouput_path = os.path.join(app.config["CLIENT_IMAGES"], "gr_processed")
-
     print("run growth rate analysis")
-    run_default_growth_rate_analysis(input_path=input_path, output_path=ouput_path,
+    run_default_growth_rate_analysis(input_path=input_path, output_path=output_path,
         total_timepoint_num=total_timepoint_num, hole_fill_area=hole_fill_area, cleanup=cleanup,
         max_proportion_exposed_edge=max_proportion_exposed_edge, minimum_growth_time=minimum_growth_time,
         timepoint_spacing=timepoint_spacing, main_channel_imagetype=main_channel_imagetype,
         growth_window_timepoints=growth_window_timepoints, total_xy_position_num=4
         )
 
-    # create a unique key to attach to original input images when they are first created.
-    unique_key = str(uuid4())
     date = datetime.utcnow()
     date = date.strftime("%Y-%m-%d-%H%MZ")
     # upload input files to s3
@@ -296,12 +353,16 @@ def upload_image_gr():
         path=input_path, unique_key=unique_key, date=date)
     # upload processed files to s3
     boundary_ims_url_ls, url_ls, dfs_to_render_ls, movie_url = upload_file_s3(bucket="pie-growth-rate-data", 
-        file_type="processed", folder_name="gr_processed", path=ouput_path, unique_key=unique_key, date=date)
+        file_type="processed", folder_name="gr_processed", path=output_path, unique_key=unique_key, date=date)
+
+    # delete input-output directories if no permission to keep 
+    # them, move them if permission granted
+    save_data(review_permission, 'gr', input_path, output_path, user_email)
 
     return render_template("public/render_image_gr.html", boundary_ims_url_ls=boundary_ims_url_ls, url_ls=url_ls, column_names_grcombined=dfs_to_render_ls[0].columns.values,
                                                         column_names_cpcombined=dfs_to_render_ls[1].columns.values, row_data_grcombined=list(dfs_to_render_ls[0].values.tolist()), 
                                                         row_data_cpcombined=list(dfs_to_render_ls[1].values.tolist()), movie_url=movie_url, zip=zip)
-    
+
 
 def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed", path=None, unique_key=None, date=None):
     #file_name = save_path, bucket = "pie-colony-recognition-data" or "pie-growth-rate-data", object_name = unique_filename
@@ -347,8 +408,6 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
                         success = head['ContentLength']
 
                     print(f"original input file {filename} is uploaded : ", success) #  if it's not False but some number, then upload successful 
-                    os.remove(current_name)
-                    print(f"original input file {filename} is deleted from local server")
 
 
     if file_type == "processed":
@@ -414,10 +473,7 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
                         if "single_im_colony_properties" in root:
                             df_to_render = pd.read_csv(current_name)
                     
-                    if success:
-                        os.remove(current_name)
-                        print(f"processed file {filename} is deleted from local server")
-                    else:
+                    if not success:
                         abort(404)
 
         if folder_name == "gr_processed":
