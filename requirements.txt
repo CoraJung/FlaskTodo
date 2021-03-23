@@ -11,7 +11,7 @@ docutils==0.15.2
 Flask==1.1.2
 idna @ file:///tmp/build/80754af9/idna_1593446292537/work
 itsdangerous==1.1.0
-Jinja2==2.11.2
+Jinja2==2.11.3
 jmespath @ file:///tmp/build/80754af9/jmespath_1594304593830/work
 joblib==1.0.0
 kiwisolver==1.3.1
