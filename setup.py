@@ -10,7 +10,6 @@ install_requires = [
     'boto3>=1.9.66',
     'pandas>=1.2.0',
     'numpy>=1.19.4',
-    'r-uuid>=0.1_4',
     'flask>=1.1.2'
 ]
 
@@ -25,7 +24,7 @@ extras_require = {
 }
 
 # Get long project description text from the README.md file
-with open('readme.md', 'rt') as f:
+with open('README.md', 'rt') as f:
     readme = f.read()
 
 
@@ -44,8 +43,7 @@ setup(
     test_suite='nose.collector',
     extras_require=extras_require,
     tests_require=tests_require,
-    install_requires=install_requires
-    },
+    install_requires=install_requires,
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
