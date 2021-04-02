@@ -8,19 +8,13 @@
         <div class="col text-center">
             <h1>
                 <img style="max-width: 50px; margin-bottom: 7px;" src="{{ url_for('static', filename='logo/pie_logo_300.png') }}" alt="">
-                PIE PROJECT
+                PIE MICROCOLONY TRACKING
             </h1>
 
             <hr>
             <p class="lead text-justify">This is a simple paragraph that briefly explains what pie project is!
-                New technological advances have enabled high-throughput phenotyping at the single-cell level. 
-                However, analyzing the large amount of data automatically and accurately is a great challenge. 
-                Currently available software achieves cell and colony tracking through the use of either manual curation of images, which is time consuming, 
-                or high-resolution images requiring specialized microscopy setups or fluorescence, which limits applicability and results in greatly decreased experimental throughput. 
-                Here we introduce a new algorithm, Processing Images Easily (PIE), that automatically tracks colonies of the yeast Saccharomyces cerevisiae in low-magnification brightfield images by combining adaptive object-center detection with gradient-based object-outline detection. 
-                We tested the performance of PIE on low-magnification brightfield time-lapse images. PIE recognizes colony outlines very robustly and accurately across a wide range of image brightnesses and focal depths. 
-                We show that PIE allows for unbiased and precise measurement of growth rates in a large number (>90,000) of microcolonies in a single time-lapse experiment.
-                Please refer to <a href="https://www.biorxiv.org/content/10.1101/253724v2.full" target="_blank">the paper</a> and <a href="https://github.com/Siegallab" target="_blank">the codes</a>.
+                Processing Images Easily (PIE) automatically tracks growing microcolonies in low-resolution brightfield and phase-contrast microscopy images. The program works for recognizing microcolonies in a wide range of microbes, and allows automated measurement of growth rate, lag times, and (if applicable) fluorescence across time for microcolonies founded by single cells. PIE recognizes colony outlines very robustly and accurately across a wide range of image brightnesses and focal depths, and allows simultaneous measurements of growth properties and fluorescence intensities with very high throughput (in our lab, ~100,000 colonies per experiment), including in complex, multiphase experiments.
+                Please refer to <a href="https://www.biorxiv.org/content/10.1101/253724v2.full" target="_blank">the paper</a> and <a href="https://github.com/Siegallab" target="_blank">the code</a>.
             </p>
             
             <hr class="my-4">
@@ -28,46 +22,18 @@
             <h3>Some Example Images</h3>
             <br>
             <div>
-                <img style="max-width: 800px;" src="{{ url_for('static', filename='img/examples/F1.large.jpg') }}" alt="">
-                <p class="font-weight-bold">Steps of colony detection by Processing Images Easily (PIE)</p>
+                <img style="max-width: 800px;" src="{{ url_for('static', filename='img/examples/microbe_zoo.jpg') }}" alt="">
+                <p class="font-weight-bold">PIE can segment images of diverse microbes</p>
                 <p>
-                (A) Raw brightfield image. To display each colony object clearly, only a representative part of the image is shown. 
-                (B) Top-hat filtered image. 
-                (C) Smoothed log-frequency histogram of the top-hat image with its two-Gaussian fit. Vertical axis is the density of the log frequencies of pixel intensities. Blue solid curve shows the smoothed log-frequency histogram of the top-hat image (smoothed data); green dashed curves are the two Gaussian fits; red solid curve is the fit combining the two Gaussians; purple vertical line is the automatically calculated threshold for cell centers in the top-hat image. 
-                (D) Cell centers after thresholding the top-hat image. 
-                (E) Combination of four gradient-changes of the raw brightfield image. Four gradient-changes are: increasing in x and increasing in y (green); increasing in x and decreasing in y (blue); decreasing in x and increasing in y (red); and decreasing in x and decreasing in y (white). 
-                (F) Gradient-change objects in (E) that overlap with cell centers (arrowheads) in (D). Color code is the same as in (E). 
-                (G) Outlines (red lines) of final colony objects recognized by PIE overlaid on raw brightfield image.
+                PIE successfully recognizes cell or microcolony outlines across a wide range of microbes.
+                (A-B) Microcolonies of S. cerivisae and S. pombe, respectively.
+                (C-D) Individuals of S. robusta and T. vaginalis.
+                (E) Dividing E. coli cells.
+                (F) Co-cultured microcolonies of P. aeruginosa and S. aureus. 
+                Scalebar is 10 µm. Images in (C) from Luke Noble and Matthew Rockman; (D) from Sally Warring and Jane Carlton; and (F) from Dominique Limoli and Kaitlin Yarrington (from <a href="https://elifesciences.org/articles/47365" target="_blank">(Limoli et al., 2019)</a>)
                 </p>
             </div>
             <hr>
-
-            <div>
-                <img style="max-width: 800px;" src="{{ url_for('static', filename='img/examples/F2.large.jpg') }}" alt="">
-                <p class="font-weight-bold">PIE performs consistently and identifies virtually all colony objects across various focal planes</p>
-                <p>Upper panel shows identified object number across various focal planes by PIE (blue) and Lblob (red). Lower panel shows images of the same representative cropped region taken at different focal planes, with the corresponding Z position marked at the lower right corner.</p>
-            </div>
-            <hr>
-
-            <div>
-                <img style="max-width: 800px;" src="{{ url_for('static', filename='img/examples/F3.large.jpg') }}" alt="">
-                <p class="font-weight-bold">PIE performs consistently and identifies virtually all colony objects across various illumination levels.</p>
-                <p>Upper panel shows the number of objects identified by PIE (blue) and Lblob (red) across various illumination levels. Lower panel shows images of the same representative cropped region taken at different illumination levels, with the corresponding exposure time marked at the lower right corner.</p>
-            </div>  
-            <hr>
-
-            <div>
-                <img style="max-width: 800px;" src="{{ url_for('static', filename='img/examples/F4.large.jpg') }}" alt="">
-                <p class="font-weight-bold">PIE-recognized colony objects overlap well with real colonies on the raw brightfield image across various focal planes.</p>
-                <p>Outlines of colony objects recognized by PIE (left panel) and Lblob (right panel) at Z position 3661 (red), 3702 (green, the optimal Z position) and 3737 (blue) overlaid on a raw brightfield image (shown here is the image taken with the optimal setting: Z position at 3702 and exposure time at 12 ms).</p>
-            </div>
-            <hr>
-
-            <div>
-                <img style="max-width: 800px;" src="{{ url_for('static', filename='img/examples/F5.large.jpg') }}" alt="">
-                <p class="font-weight-bold">PIE-recognized colony objects overlap well with real colonies on the raw brightfield image across various illumination levels.</p>
-                <p>Outlines of colony objects recognized by PIE (left panel) and Lblob (right panel) at exposure time 2 ms (red), 12 ms (green, the optimal exposure time) and 16 ms (blue) overlaid on a raw brightfield image (shown here is the image taken with the optimal setting: Z position at 3702 and exposure time at 12 ms).</p>
-            </div>
 
         </div>
 
