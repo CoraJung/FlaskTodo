@@ -11,9 +11,11 @@ from uuid import uuid4
 from botocore.exceptions import ClientError, WaiterError
 from botocore.client import Config
 from boto3.s3.transfer import TransferConfig
+from itertools import product
 import botocore
 import pandas as pd
 import shutil
+import time
 
 @app.template_filter("clean_date")
 def clean_date(dt):
@@ -157,6 +159,38 @@ def save_data(review_permission, analysis_code, input_path, output_path, user_em
         shutil.rmtree(input_path)
         shutil.rmtree(output_path)
 
+def upload_to_s3_bucket(file_path, key_name, s3_client, bucket):
+    # upload the file to the bucket
+    try:
+        mb = 1024 ** 2
+        config = TransferConfig(multipart_threshold=30*mb)
+        s3_client.upload_file(file_path, bucket, key_name, Config=config, ExtraArgs={'ACL': 'public-read'})
+    except ClientError as e:
+        logging.error(e)
+        # then success is still false
+    else:
+        head = s3_client.head_object(Bucket=bucket, Key=key_name)
+        success = head['ContentLength']
+#    print(f"original input file {file_path} is uploaded : ", success) #  if it's not False but some number, then upload successful
+    return(success)
+
+def zip_analysis_folder(zipname, path):
+    now = datetime.now()
+    dt_string = now.strftime("%Y-%m-%d_%H_%M_%S")
+    out_zip_filename = f"{zipname}_{dt_string}"
+    # initially put zip file in a temporary folder outside path, 
+    # then move into path, or you get nesting of zip files
+    unique_key = str(uuid4())
+    temp_zip_location = os.path.join(os.path.dirname(path),unique_key)
+    os.makedirs(temp_zip_location)
+    # zip file
+    out_zip_path_initial = os.path.join(temp_zip_location,out_zip_filename)
+    shutil.make_archive(out_zip_path_initial, 'zip', path)
+    # move zipped file
+    out_zip_path_final = os.path.join(path,out_zip_filename)
+    os.rename(out_zip_path_initial+'.zip',out_zip_path_final+'.zip')
+    # clean up directories
+    shutil.rmtree(temp_zip_location)
 
 @app.route("/colony-recognition", methods=["GET", "POST"])
 
@@ -236,28 +270,34 @@ def upload_image_cr():
             file.save(save_path)
 
             # run analysis 
+            analysis_start_time = time.process_time()
             colony_mask, colony_property_df = analyze_single_image(
                 input_im_path=save_path, output_path=output_path, image_type=image_type,
                 hole_fill_area=hole_fill_area, cleanup=cleanup, max_proportion_exposed_edge=max_proportion_exposed_edge,
                 save_extra_info=True)
-            flash("File(s) successfully analyzed", "info")
+            analysis_stop_time = time.process_time()
+            analysis_time = analysis_stop_time-analysis_start_time
+            flash("File(s) successfully analyzed, commencing data upload", "info")
 
             # create a unique key to attach to original input images when they are first created.
             unique_file_key = str(uuid4())
-            date = datetime.utcnow()
-            date = date.strftime("%Y-%m-%d-%H%MZ")
 
             # upload input files to s3
-            upload_file_s3(bucket="pie-colony-recognition-data", file_type="original", folder_name="cr_processed", path=input_path, unique_key=unique_file_key, date=date)
+            upload_file_s3(bucket="pie-colony-recognition-data", file_type="original", folder_name="cr_processed", path=input_path, unique_key=unique_file_key)
             # upload processed files to s3
-            boundary_im_url, url_dict, df_to_render = upload_file_s3(bucket="pie-colony-recognition-data", file_type="processed", folder_name="cr_processed", path=output_path, unique_key=unique_file_key, date=date)
+            boundary_im_url, website_df, df_to_render = upload_file_s3(bucket="pie-colony-recognition-data", file_type="processed", folder_name="cr_processed", path=output_path, unique_key=unique_file_key)
             flash("File(s) successfully uploaded", "info")
 
             # delete input-output directories if no permission to keep 
             # them, move them if permission granted
             save_data(review_permission, 'cr', input_path, output_path, user_email)
-
-            return render_template("public/render_image.html", boundary_im_url=boundary_im_url, url_dict=url_dict, col_prop_tables=[df_to_render.round(1).to_html(classes='styled-table', justify = 'center', header=True, index=False)])
+            return render_template(
+                "public/render_image.html",
+                boundary_im_url=boundary_im_url,
+                website_df=website_df,
+                analysis_time=round(analysis_time,1),
+                col_prop_tables=[df_to_render.round(1).to_html(classes='styled-table', justify = 'center', header=True, index=False)]
+                )
 
 #    return render_template("public/colony_recognition.html")
 
@@ -335,6 +375,7 @@ def upload_image_gr():
         file.save(save_path)
     
     print("run growth rate analysis")
+    analysis_start_time = time.process_time()
     run_default_growth_rate_analysis(input_path=input_path, output_path=output_path,
         total_timepoint_num=total_timepoint_num, hole_fill_area=hole_fill_area, cleanup=cleanup,
         max_proportion_exposed_edge=max_proportion_exposed_edge,
@@ -342,15 +383,17 @@ def upload_image_gr():
         growth_window_timepoints=growth_window_timepoints, total_xy_position_num=1,
         im_file_extension=extension
         )
+    analysis_stop_time = time.process_time()
+    analysis_time = analysis_stop_time-analysis_start_time
+    flash("File(s) successfully analyzed, commencing data upload", "info")
 
-    date = datetime.utcnow()
-    date = date.strftime("%Y-%m-%d-%H%MZ")
     # upload input files to s3
     upload_file_s3(bucket="pie-growth-rate-data", file_type="original", folder_name="gr_processed", 
-        path=input_path, unique_key=unique_key, date=date)
+        path=input_path, unique_key=unique_key)
     # upload processed files to s3
-    boundary_ims_url_ls, url_dict, df_to_render, movie_url = upload_file_s3(bucket="pie-growth-rate-data", 
-        file_type="processed", folder_name="gr_processed", path=output_path, unique_key=unique_key, date=date)
+    movie_url, website_df, df_to_render = upload_file_s3(bucket="pie-growth-rate-data", 
+        file_type="processed", folder_name="gr_processed", path=output_path, unique_key=unique_key)
+    flash("File(s) successfully uploaded", "info")
 
     # delete input-output directories if no permission to keep 
     # them, move them if permission granted
@@ -359,23 +402,19 @@ def upload_image_gr():
     return render_template(
         "public/render_image_gr.html",
         movie_url = movie_url,
-        boundary_ims_url_ls=boundary_ims_url_ls,
-        url_dict=url_dict,
+        website_df=website_df,
+        analysis_time = round(analysis_time,1),
         gr_tables=[df_to_render.round(3).to_html(classes='styled-table', justify = 'center', header=True, index=False)])
 
 
-def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed", path=None, unique_key=None, date=None):
+def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed", path=None, unique_key=None):
     #file_name = save_path, bucket = "pie-colony-recognition-data" or "pie-growth-rate-data", object_name = unique_filename
     
     # initiate s3 client
     s3_client = boto3.client('s3', aws_access_key_id=app.config["AWS_ACCESS_KEY_ID"],
                     aws_secret_access_key=app.config["AWS_SECRET_ACCESS_KEY"])
-    s3_resource = boto3.resource('s3')
-    success = False
+#    s3_resource = boto3.resource('s3')
 
-    url_dict = {}
-    boundary_ims_url_ls = []
-#    dfs_to_render_ls = []
     # upload original input images to s3
 
     if file_type == "original":
@@ -385,105 +424,142 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
             for filename in files:
                 if filename and filename != ".DS_Store":
                     current_name = os.path.join(root, filename)
-                    
-                    print(f"-----------filename: {filename}-------------------")
-                    input_filename, file_extension = os.path.splitext(filename)
+                    input_filename = filename
                     print(f"-----------input filename: {input_filename}-------------------")
-                    input_filename = input_filename + "_" + date + file_extension
-                    print(f"-----------updated input filename: {input_filename}-------------------")
-                    object_name = os.path.join(unique_key, "original_input_file(s)", input_filename) # example: 8ba5c8c0-9edf-4988-8099-d8a249c4d635/original_input_file(s)/t10xy4_2020-12-23-0337Z.tif
-                    print("input filename with unique key and date attached: ", object_name) 
+                    object_name = os.path.join(unique_key, "original_input", input_filename) # example: 8ba5c8c0-9edf-4988-8099-d8a249c4d635/original_input/t10xy1.tif
+                    print("input filename with unique key attached: ", object_name) 
                     
-                    # upload the file to the bucket
-                    try:
-                        mb = 1024 ** 2
-                        config = TransferConfig(multipart_threshold=30*mb)
-                        s3_client.upload_file(current_name, bucket, object_name, Config=config, ExtraArgs={'ACL': 'public-read'})
-
-                    except ClientError as e:
-                        logging.error(e)
-                        # then success is still false
-                    else:
-                        head = s3_client.head_object(Bucket=bucket, Key=object_name)
-                        success = head['ContentLength']
-
-                    print(f"original input file {filename} is uploaded : ", success) #  if it's not False but some number, then upload successful 
-
+                    success = upload_to_s3_bucket(current_name, object_name, s3_client, bucket)
 
     if file_type == "processed":
         print("trying to upload processed files to s3...")
+        analysis_folder = os.path.basename(os.path.dirname(path))
+
+        # create pandas df that will hold files to be uploaded
+        if analysis_folder=='cr_processed':
+            # save directory zip file, mask, boundary_im, and colony csv
+            website_df_template = pd.DataFrame(
+                {
+                    'local_folder':[
+                        os.path.basename(path),
+                        'single_im_colony_properties',
+                        'boundary_ims',
+                        'colony_masks'
+                        ],
+                    'extension':[
+                        '.zip',
+                        '.csv',
+                        '.jpg',
+                        '.tif'
+                        ],
+                    'website_key_general':[
+                        'zip file of full directory',
+                        'colony property data',
+                        'boundary image file',
+                        'colony mask file'
+                        ]
+                    }
+                )
+        elif analysis_folder=='gr_processed':
+            # save directory zip file, growth rate + colony property + 
+            # setup file csvs, movie, masks
+            website_df_template = pd.DataFrame(
+                {
+                    'local_folder':[
+                        os.path.basename(path),
+                        os.path.basename(path),
+                        'movies',
+                        'colony_masks'
+                        ],
+                    'extension':[
+                        '.zip',
+                        '.csv',
+                        '.gif',
+                        '.tif'
+                        ],
+                    'website_key_general':[
+                        'zip file of full directory',
+                        'colony property data',
+                        'movie file',
+                        'colony mask file'
+                        ]
+                    }
+                )
+        # make zipfile of path (output directory)
+        if analysis_folder=='gr_processed':
+            zipname = 'PIE_growth_analysis_folder'
+        elif analysis_folder=='cr_processed':
+            zipname = 'PIE_colony_recognition_folder'
+        zip_analysis_folder(zipname, path)
+
+        website_df_list = []
+        img_url = None
         for root, dirs, files in os.walk(path, topdown=True):
             for filename in files:
-                if filename and filename != ".DS_Store":
-                    # construct the full local path
-                    current_name = os.path.join(root, filename)
-                    
+                if filename:
+                    # initialize success value
+                    success = False
+
+                    ### upload all data, but only keep some for website ###
                     # construct the full s3 directory path
                     local_path_ls = root.split(os.path.sep)
-                    print("local path ls :", local_path_ls)
+                    file_folder = local_path_ls[-1]
+                    file_extension = os.path.splitext(filename)[1]
+
+                    # construct the full local path
+                    current_name = os.path.join(root, filename)
+
+                    # construct the full s3 directory path
                     folder_index = local_path_ls.index(folder_name) #gr_processed or cr_processed
                     local_path = "/".join(local_path_ls[folder_index:])
-
-                    output_filename, file_extension = os.path.splitext(filename)
-                    output_filename = output_filename + "_" + date + file_extension
-
+                    output_filename = filename
                     object_name = os.path.join(unique_key, local_path, output_filename) #unique_key/gr_processed/.../filename
-                    
-                    # upload the file to the bucket
-                    try:
-                        mb = 1024 ** 2
-                        config = TransferConfig(multipart_threshold=30*mb)
-                        s3_client.upload_file(current_name, bucket, object_name, Config=config, ExtraArgs={'ACL': 'public-read'})
 
-                    except ClientError as e:
-                        logging.error(e)
-                        # then success is still false
-                    else:
-                        head = s3_client.head_object(Bucket=bucket, Key=object_name)
-                        success = head['ContentLength']
-
-                    print(f"processed file {filename} is uploaded : ", success) #  if it's not False but some number, then upload successful 
+                    # upload data, including the zip file
+                    success = upload_to_s3_bucket(current_name, object_name, s3_client, bucket)
 
                     # get url for image file and csv file that will be rendered for client
                     region_name = "us-east-2"
                     url_head = f"https://{bucket}.s3.{region_name}.amazonaws.com"
                     url = os.path.join(url_head, object_name)
 
+                    # check whether data needs to be loaded on website
+                    if (file_folder, file_extension) in zip(
+                        website_df_template.local_folder, website_df_template.extension
+                        ):
+                        curr_website_df = website_df_template[
+                            (website_df_template.local_folder==file_folder) &
+                            (website_df_template.extension==file_extension)
+                            ].copy()
+                        curr_website_df['url'] = url
+                        curr_website_df['website_key'] = \
+                            f"{curr_website_df.website_key_general.to_list()[0]}: {output_filename}"
+                        website_df_list.append(curr_website_df)
+
                     if folder_name == "gr_processed":
-#                        download_csv_ls = ['growth_rates_combined.csv', 'colony_properties_combined.csv']
-#                        if filename in download_csv_ls:
+
                         if filename=="growth_rates_combined.csv":
                             print("url for client to download: ", url)
                             df_to_render = pd.read_csv(current_name)
 
-                        if "boundary_ims" in root:
-                            print("boundary ims url: ", url)
-                            boundary_ims_url_ls.append(url)
-
                         if "movies" in root:
-                            movie_url = url
+                            img_url = url
                             print("movie url: ", url)
                     
                     else: #if folder_name == "cr_processed"
                         if "boundary_ims" in root:
-                            boundary_im_url = url
+                            img_url = url
                         
                         # for csv file that needs to be rendered in table format
                         if "single_im_colony_properties" in root:
                             df_to_render = pd.read_csv(current_name)
-                    if folder_name in ['cr_processed','gr_processed']:
-                        url_dict[os.path.join(local_path_ls[-1],output_filename)] = url
+
                     if not success:
                         abort(404)
 
-        if folder_name == "gr_processed":
-            url_dict['boundary_ims'] = boundary_ims_url_ls
-            boundary_ims_url_ls.sort()
+        website_df = pd.merge(website_df_template, pd.concat(website_df_list))
 
-            return boundary_ims_url_ls, url_dict, df_to_render, movie_url
-
-        else:
-            return boundary_im_url, url_dict, df_to_render
+        return img_url, website_df, df_to_render
 
 
 
