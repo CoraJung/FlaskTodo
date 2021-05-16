@@ -8,6 +8,11 @@
         <div class="col">
 
             <h1>Colony Recognition Analysis</h1>
+            <p class="lead text-justify">
+                <br>For the colomy recognition module of this website, upload a single brightfield or phase contrast image.<br>
+                We find that for <b>yeast and bigger cells</b>, 10-20x magnification works best; for <b>bacteria</b>, 40-60x magnification is optimal.<br> 
+                PIE works best with slightly defocused images, in which cells appear as slightly brighter than the image background, with fuzzy dark boundaries (see example image below).
+            </p>
 
             <hr>
         
@@ -32,9 +37,9 @@
                     </div>
  
                     <div>
-                        <medium>maximum image size: 000 MB</medium>
+                        <medium>maximum image size: 150 MB</medium>
                     </div>
-
+                    <div id="image-list" class="row" style="margin: 20px 0px;"></div>
                     <hr>
 
                     <!-- <h5>Image Analysis Parameter Selection</h5> -->
@@ -59,9 +64,10 @@
                             <input id="imageTypeInput" name="ImageType" value="" style="display:none;">
                             <div
                                 type="text"
-                                class="img-type-btn btn btn-outline-primary"
+                                class="img-type-btn btn btn-outline-primary active"
                                 id="brightField"
                                 value="Brightfield"
+                                aria-pressed="true"
                             >
                                 Brightfield
                             </div>
@@ -95,13 +101,16 @@
                             <label class="custom-control-label big-checkbox" for="customCheck1">
                                 <h4 id="big-checkbox-label">Perform Clean-Up Step</h4>
                             </label>
+                            <small id="cleanUpHelpBlock" class="form-text text-muted">
+                            Whether to perform recursive cleanup step to remove pieces of background detected as part of the colony. This is helpful in certain imaging conditions but can result in parts of real colonies being missed; we recommend first trying analysis on a set of images without cleanup first. Images taken under identical imaging conditions should be consistent in whether or not they require cleanup.
+                            </small>
                             <div id="conditional_part">
                                 <medium>
                                     <strong>Max Proportion Exposed Edge</strong>
                                 </medium>
-                                <input type="text" class="form-control" placeholder="0.25" aria-label="max_prop_exposed_edge" name="MaxProportionExposedEdge">
+                                <input type="text" class="form-control" placeholder="0.75" aria-label="max_prop_exposed_edge" name="MaxProportionExposedEdge">
                                 <small id="maxProportionEdgeHelpBlock" class="form-text text-muted">
-                                The max proportion of the edge of a detected colony ‘pie piece’ that is allowed to not touch a neighboring pie piece before being removed during cleanup step. Recommended to be set to 0.25-0.4. Only applies during cleanup steps.
+                                The max proportion of the edge of a detected colony ‘pie piece’ that is allowed to not touch a neighboring pie piece before being removed during cleanup step. Recommended to be set to 0.6-0.75. Only applies during cleanup steps.
                                 </small>
                             </div>
                         </div>
@@ -116,7 +125,7 @@
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="customCheck2" name="Disclaimer">
                             <label class="custom-control-label" for="customCheck2">
-                                "I give the Siegal lab permission to review these images and the image analysis output (optional)”
+                                "I give the Siegal lab permission to review these images and the image analysis output” (optional)
                             </label>
                         </div>
                     </p>
@@ -131,20 +140,19 @@
                     </div>
 
                     <small id="collectEmailHelpBlock" class="form-text text-muted">
-                        Why we would want this...
+                        While sharing your analysis data with the Siegal lab is not required, seeing how PIE performs on user-supplied images will allow us to improve this program. We would therefore appreciate your permission to look at your images; of course, we will not share any of them outside the Siegal lab without first getting your permission.
                     </small>
                     </p>
                 </div>
 
                 <button type="submit" class="btn btn-primary">Run Analysis</button>
-                <div id="image-list" class="row" style="margin: 20px 0px;"></div>
             </form>
 
             <hr>
 
             <div class="link" style="width: 18rem;">
                   <a href="https://www.biorxiv.org/content/10.1101/253724v2.full" target="_blank" class="card-link">Read Paper</a>
-                  <a href="https://github.com/Siegallab" target="_blank" class="card-link">Download Codes</a>
+                  <a href="https://github.com/Siegallab/PIE" target="_blank" class="card-link">Download Code</a>
             </div>
             <br>
 

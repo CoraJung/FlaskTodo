@@ -12,8 +12,17 @@
             </h1>
 
             <hr>
-            <p class="lead text-justify">Processing Images Easily (PIE) automatically tracks growing microcolonies in low-resolution brightfield and phase-contrast microscopy images. The program works for recognizing microcolonies in a wide range of microbes, and allows automated measurement of growth rate, lag times, and (if applicable) fluorescence across time for microcolonies founded by single cells. PIE recognizes colony outlines very robustly and accurately across a wide range of image brightnesses and focal depths, and allows simultaneous measurements of growth properties and fluorescence intensities with very high throughput (in our lab, ~100,000 colonies per experiment), including in complex, multiphase experiments.
-                Please refer to <a href="https://www.biorxiv.org/content/10.1101/253724v2.full" target="_blank">the paper</a> and <a href="https://github.com/Siegallab" target="_blank">the code</a>.
+            <p class="lead text-justify">Processing Images Easily (PIE) automatically tracks growing microcolonies in low-resolution brightfield and phase-contrast microscopy images. The program works for recognizing microcolonies in a wide range of microbes, and allows automated measurement of growth rate, lag times, and (if applicable) fluorescence across time for microcolonies founded by single cells. PIE recognizes colony outlines very robustly and accurately across a wide range of image brightnesses and focal depths, and allows simultaneous measurements of growth properties and fluorescence intensities with very high throughput (in our lab, ~100,000 colonies per experiment), including in complex, multiphase experiments.</p>
+
+            <p class="lead text-justify">PIE is available <a href="https://github.com/Siegallab/PIE" target="_blank">online for download</a>; this website allows users to quickly determine whether the software works for their microorganism and imaging conditions before investing time to install the full program. Here, users can either upload a single image (<b>Colony Recognition Analaysis</b>) to determine how well PIE is able to recognize colonies of their microbe of interest, or a series of images at consecutive timepoints (<b>Growth Rate Analysis</b>) to view PIE-calculated growth rates and lags for growing microcolonies in their images.</p>
+
+            <p class="lead text-justify">Keep in mind that PIE works best with slightly defocused images, in which cells appear as slightly brighter than the image background, with fuzzy dark boundaries (see example image below).</p>
+
+            <p class="lead text-justify">Please refer to <a href="https://www.biorxiv.org/content/10.1101/253724v2.full" target="_blank">the paper</a> for technical details.</p>
+
+            <p align="center">
+                <a class="btn btn-primary" href="/colony-recognition" role="button">Colony Recognition Analysis</a>
+                <a class="btn btn-primary" href="/growth-rate" role="button">Growth Rate Analysis</a>
             </p>
             
             <hr class="my-4">
@@ -21,15 +30,14 @@
             <h3>Some Example Images</h3>
             <br>
             <div>
-                <img style="max-width: 800px;" src="{{ url_for('static', filename='img/examples/microbe_zoo.jpg') }}" alt="">
-                <p class="font-weight-bold">PIE can segment images of diverse microbes</p>
+                <img style="max-width: 400px;" src="{{ url_for('static', filename='img/examples/microbe_zoo.jpg') }}" alt="">
+                <p class="font-weight-bold">PIE successfully recognizes cell or microcolony outlines across a wide range of microbes.</p>
                 <p>
-                PIE successfully recognizes cell or microcolony outlines across a wide range of microbes.
                 (A-B) Microcolonies of S. cerivisae and S. pombe, respectively.
                 (C-D) Individuals of S. robusta and T. vaginalis.
                 (E) Dividing E. coli cells.
                 (F) Co-cultured microcolonies of P. aeruginosa and S. aureus. 
-                Scalebar is 10 µm. Images in (C) from Luke Noble and Matthew Rockman; (D) from Sally Warring and Jane Carlton; and (F) from Dominique Limoli and Kaitlin Yarrington (from <a href="https://elifesciences.org/articles/47365" target="_blank">Limoli et al., 2019</a>)
+                Scalebar is 10 µm. Images in (C) from Luke Noble and Matthew Rockman; (D) from Sally Warring and Jane Carlton; and (F) from Dominique Limoli and Kaitlin Yarrington (from <a href="https://elifesciences.org/articles/47365" target="_blank">Limoli et al., 2019</a>, used with permission)
                 </p>
             </div>
             <hr>

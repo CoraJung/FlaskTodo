@@ -59,3 +59,45 @@ hr {
   background-color: yellowgreen;
   color: black;
 }
+
+/* add table styles
+from https://dev.to/dcodeyt/creating-beautiful-html-tables-with-css-428l
+*/
+
+/*
+    box-shadow to add a subtle transparent shadow around the table
+    border-collapse to ensure there is no space between the cell borders
+*/
+
+.styled-table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    text-align: center;
+}
+/*
+  change header
+*/
+.styled-table thead tr {
+    background-color: #865a8f;
+    color: #ffffff;
+    text-align: center;
+}
+/*
+    pad cells
+*/
+.styled-table th,
+.styled-table td {
+    padding: 12px 15px;
+}
+/*
+    Add a lighter background to every second row to help readability
+*/
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: #e8e6f7;
+}
+
+

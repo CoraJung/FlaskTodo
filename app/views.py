@@ -237,8 +237,9 @@ def upload_image_cr():
 
             # run analysis 
             colony_mask, colony_property_df = analyze_single_image(
+                input_im_path=save_path, output_path=output_path, image_type=image_type,
                 hole_fill_area=hole_fill_area, cleanup=cleanup, max_proportion_exposed_edge=max_proportion_exposed_edge,
-                save_extra_info=True, image_type=image_type, input_im_path=save_path, output_path=output_path)
+                save_extra_info=True)
             flash("File(s) successfully analyzed", "info")
 
             # create a unique key to attach to original input images when they are first created.
@@ -249,15 +250,14 @@ def upload_image_cr():
             # upload input files to s3
             upload_file_s3(bucket="pie-colony-recognition-data", file_type="original", folder_name="cr_processed", path=input_path, unique_key=unique_file_key, date=date)
             # upload processed files to s3
-            boundary_im_url, url_ls, df_to_render = upload_file_s3(bucket="pie-colony-recognition-data", file_type="processed", folder_name="cr_processed", path=output_path, unique_key=unique_file_key, date=date)
+            boundary_im_url, url_dict, df_to_render = upload_file_s3(bucket="pie-colony-recognition-data", file_type="processed", folder_name="cr_processed", path=output_path, unique_key=unique_file_key, date=date)
             flash("File(s) successfully uploaded", "info")
 
             # delete input-output directories if no permission to keep 
             # them, move them if permission granted
             save_data(review_permission, 'cr', input_path, output_path, user_email)
 
-            return render_template("public/render_image.html", boundary_im_url=boundary_im_url, url_ls=url_ls, column_names=df_to_render.columns.values,
-                                    row_data=list(df_to_render.values.tolist()), zip=zip)
+            return render_template("public/render_image.html", boundary_im_url=boundary_im_url, url_dict=url_dict, col_prop_tables=[df_to_render.round(1).to_html(classes='styled-table', justify = 'center', header=True, index=False)])
 
 #    return render_template("public/colony_recognition.html")
 
@@ -268,7 +268,6 @@ def upload_image_gr():
     hole_fill_area = np.inf
     cleanup = False
     max_proportion_exposed_edge = 0.75
-    minimum_growth_time = 4
     timepoint_spacing = 3600
     main_channel_imagetype = 'brightfield'
     growth_window_timepoints = 0
@@ -297,9 +296,6 @@ def upload_image_gr():
         elif key == "MaxProportionExposedEdge" and value != "":
             cleanup = True
             max_proportion_exposed_edge = float(value)
-        
-        elif key == "MinimumGrowthTime" and value != "":
-            minimum_growth_time = int(value)
         
         elif key == "GrowthWindowTimepoints" and value != "":
             growth_window_timepoints = int(value)
@@ -341,9 +337,10 @@ def upload_image_gr():
     print("run growth rate analysis")
     run_default_growth_rate_analysis(input_path=input_path, output_path=output_path,
         total_timepoint_num=total_timepoint_num, hole_fill_area=hole_fill_area, cleanup=cleanup,
-        max_proportion_exposed_edge=max_proportion_exposed_edge, minimum_growth_time=minimum_growth_time,
+        max_proportion_exposed_edge=max_proportion_exposed_edge,
         timepoint_spacing=timepoint_spacing, main_channel_imagetype=main_channel_imagetype,
-        growth_window_timepoints=growth_window_timepoints, total_xy_position_num=4
+        growth_window_timepoints=growth_window_timepoints, total_xy_position_num=1,
+        im_file_extension=extension
         )
 
     date = datetime.utcnow()
@@ -352,16 +349,19 @@ def upload_image_gr():
     upload_file_s3(bucket="pie-growth-rate-data", file_type="original", folder_name="gr_processed", 
         path=input_path, unique_key=unique_key, date=date)
     # upload processed files to s3
-    boundary_ims_url_ls, url_ls, dfs_to_render_ls, movie_url = upload_file_s3(bucket="pie-growth-rate-data", 
+    boundary_ims_url_ls, url_dict, df_to_render, movie_url = upload_file_s3(bucket="pie-growth-rate-data", 
         file_type="processed", folder_name="gr_processed", path=output_path, unique_key=unique_key, date=date)
 
     # delete input-output directories if no permission to keep 
     # them, move them if permission granted
     save_data(review_permission, 'gr', input_path, output_path, user_email)
 
-    return render_template("public/render_image_gr.html", boundary_ims_url_ls=boundary_ims_url_ls, url_ls=url_ls, column_names_grcombined=dfs_to_render_ls[0].columns.values,
-                                                        column_names_cpcombined=dfs_to_render_ls[1].columns.values, row_data_grcombined=list(dfs_to_render_ls[0].values.tolist()), 
-                                                        row_data_cpcombined=list(dfs_to_render_ls[1].values.tolist()), movie_url=movie_url, zip=zip)
+    return render_template(
+        "public/render_image_gr.html",
+        movie_url = movie_url,
+        boundary_ims_url_ls=boundary_ims_url_ls,
+        url_dict=url_dict,
+        gr_tables=[df_to_render.round(3).to_html(classes='styled-table', justify = 'center', header=True, index=False)])
 
 
 def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed", path=None, unique_key=None, date=None):
@@ -373,9 +373,9 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
     s3_resource = boto3.resource('s3')
     success = False
 
-    url_ls = []
+    url_dict = {}
     boundary_ims_url_ls = []
-    dfs_to_render_ls = []
+#    dfs_to_render_ls = []
     # upload original input images to s3
 
     if file_type == "original":
@@ -450,11 +450,11 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
                     url = os.path.join(url_head, object_name)
 
                     if folder_name == "gr_processed":
-                        download_csv_ls = ['growth_rates_combined.csv', 'colony_properties_combined.csv']
-                        if filename in download_csv_ls:
+#                        download_csv_ls = ['growth_rates_combined.csv', 'colony_properties_combined.csv']
+#                        if filename in download_csv_ls:
+                        if filename=="growth_rates_combined.csv":
                             print("url for client to download: ", url)
-                            url_ls.append(url)
-                            dfs_to_render_ls.append(pd.read_csv(current_name))
+                            df_to_render = pd.read_csv(current_name)
 
                         if "boundary_ims" in root:
                             print("boundary ims url: ", url)
@@ -465,25 +465,25 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
                             print("movie url: ", url)
                     
                     else: #if folder_name == "cr_processed"
-                        url_ls.append(url)
                         if "boundary_ims" in root:
                             boundary_im_url = url
                         
                         # for csv file that needs to be rendered in table format
                         if "single_im_colony_properties" in root:
                             df_to_render = pd.read_csv(current_name)
-                    
+                    if folder_name in ['cr_processed','gr_processed']:
+                        url_dict[os.path.join(local_path_ls[-1],output_filename)] = url
                     if not success:
                         abort(404)
 
         if folder_name == "gr_processed":
-            url_ls = url_ls + boundary_ims_url_ls
+            url_dict['boundary_ims'] = boundary_ims_url_ls
             boundary_ims_url_ls.sort()
 
-            return boundary_ims_url_ls, url_ls, dfs_to_render_ls, movie_url
+            return boundary_ims_url_ls, url_dict, df_to_render, movie_url
 
         else:
-            return boundary_im_url, url_ls, df_to_render
+            return boundary_im_url, url_dict, df_to_render
 
 
 

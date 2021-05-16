@@ -14,80 +14,34 @@
             <h1>Growth Rate Analysis Output Result</h1>
             <hr>
 
-            <h4>Boundary Image Movie</h4>
+            <h4>Growth Movie</h4>
             <hr>
 
             <img src= "{{movie_url}}" width="800">
 
             <br>
             <br>
-
-            <h4>Boundary Images</h4>
-            <hr>
             
-            <ul class="boundary_image_display">
-            {% set count = namespace(value=1) %}
-            {% for img in boundary_ims_url_ls %}
-            <div><img src= "{{img}}" width="500">{{ count.value }}</div>
-            {% set count.value = count.value + 1 %}
+            <h4>Table of Growth Rates</h4>
+            <hr>
+
+            {% for table in gr_tables %}
+                {{ table|safe }}
             {% endfor %}
+
+            <br>
+            <br>
+
+            <h4>Links to download processed images and csv</h4>
+            <hr>
+            <ul class="list-group"; style="list-style-type:none; margin: 10px 10px 10px 30px; font-size:16px">
+                {% for key, value in url_dict.items() %}
+                <li><a href="{{ value }}">{{ key }}</a></li>
+                {% endfor %}
             </ul>
 
-            <!--url list to images under the unique user directory-->
-            <p>Link to download processed images and csv</p>
-            <ul>
-                {% for url in url_ls %}
-                <li>{{ url }}</li>
-                {% endfor %}
-            </ul>
-
             <br>
             <br>
-            
-            <h4>Table of Growth Rate</h4>
-            <hr>
-
-            <table>
-            
-                <tr>
-                    {% for col in column_names_grcombined %}
-                    <th>{{col}}</th>
-                    {% endfor %}
-                </tr>
-
-                {% for row in row_data_grcombined %}
-                <tr>
-                    {% for col, row_ in zip(column_names_grcombined, row) %}
-                    <td>{{row_}}</td>
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-
-            </table>
-            
-            <br>
-            <br>
-            
-            <h4>Table of Colony Properties</h4>
-            <hr>
-
-            <table>
-            
-                <tr>
-                    {% for col in column_names_cpcombined %}
-                    <th>{{col}}</th>
-                    {% endfor %}
-                </tr>
-
-                {% for row in row_data_cpcombined %}
-                <tr>
-                    {% for col, row_ in zip(column_names_cpcombined, row) %}
-                    <td>{{row_}}</td>
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-
-            </table>
 
 
 

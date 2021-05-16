@@ -19,34 +19,25 @@
 
             <img src= "{{boundary_im_url}}" width="800">
             
-            <!--url list to images under the unique user directory-->
-            <p>Link to download processed images and csv</p>
-            <ul>
-                {% for url in url_ls %}
-                <li>{{ url }}</li>
-                {% endfor %}
-            </ul>
+            <hr>
 
             <h4>Table of Colony Properties</h4>
             <hr>
 
-            <table>
-            
-                <tr>
-                    {% for col in column_names %}
-                    <th>{{col}}</th>
-                    {% endfor %}
-                </tr>
+            {% for table in col_prop_tables %}
+                {{ table|safe }}
+            {% endfor %}
 
-                {% for row in row_data %}
-                <tr>
-                    {% for col, row_ in zip(column_names, row) %}
-                    <td>{{row_}}</td>
-                    {% endfor %}
-                </tr>
+            <!--url list to images under the unique user directory-->
+            <hr>
+            <h4>Links to download processed images and csv</h4>
+            <hr>
+            <ul class="list-group"; style="list-style-type:none; margin: 10px 10px 10px 30px; font-size:16px">
+                {% for key, value in url_dict.items() %}
+                <li><a href="{{ value }}">{{ key }}</a></li>
                 {% endfor %}
-
-            </table>
+            </ul>
+            <hr>
 
         </div>
     </div>

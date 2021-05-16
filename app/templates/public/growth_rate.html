@@ -7,14 +7,12 @@
     <div class="row">
         <div class="col">
             <h1>Growth Rate Analysis</h1>
-            <p>
-                For the growth rate module of this website, upload a single timeseries (all images at one xy position) 
+            <p class="lead text-justify">
+                <br>For the growth rate module of this website, upload a single timeseries (all images at one xy position) 
                 of brightfield or phase contrast micrographs.<br>
                 We find that for <b>yeast and bigger cells</b>, 10-20x magnification works best; for <b>bacteria</b>, 40-60x magnification is optimal.<br> 
-                PIE works best with slightly defocused images, 
-                in which cells appear as slightly brighter than the image background, with fuzzy dark boundaries (see example image below).<br> 
+                PIE works best with slightly defocused images, in which cells appear as slightly brighter than the image background, with fuzzy dark boundaries (see example image below).<br> 
                 Arrange the micrographs below in consecutive order (please note that the images will be renamed t1xy1-t#xy1 in analysis output).<br>
-                More detailed explanations of all the parameters will be added later, but for now, you can just read the Explanation column for each parameter in the setup files provided.
             </p>
 
             <hr>
@@ -39,9 +37,7 @@
                         </label>
                     </div>
                     <div>
-                        <medium>maximum image size: 000 MB</medium>
-                        <br>
-                        <medium class="text-muted">(the user must have some way of ordering these!)</medium>
+                        <medium>maximum image size: 150 MB</medium>
 
                     </div>
 
@@ -54,15 +50,16 @@
                     <!-- Image Type -->
                     <p>
                         <div>
-                            <label><h4>1. Image Type</h4></label>
+                            <label><h4>Image Type</h4></label>
                         </div>
                         <div>
                             <input id="imageTypeInput" name="ImageType" value="" style="display:none;">
                             <div
                                 type="text"
-                                class="img-type-btn btn btn-outline-primary"
+                                class="img-type-btn btn btn-outline-primary active"
                                 id="brightField"
                                 value="Brightfield"
+                                aria-pressed="true"
                             >
                                 Brightfield
                             </div>
@@ -80,7 +77,7 @@
                     <!-- Hole Fill Area -->
                     <p>
                         <div>
-                        <label><h4>2. Hole Fill Area</h4></label>
+                        <label><h4>Hole Fill Area</h4></label>
                         <input type="text" class="form-control" placeholder="inf" aria-label="hole fill area" name="HoleFillArea" id="holefillarea">
                         <small id="holeFillAreaHelpBlock" class="form-text text-muted">
                             Size (in pixels) of the largest empty space between cells (on the inside of a colony) to consider part of the colony. Intercell space is not typically easily identified in colonies of round cells; for these we recommend first trying the default setting (Inf). However, intercell space can often be accurately parsed in colonies of rod-shaped cells.
@@ -91,52 +88,39 @@
                     <!-- Clean Up -->
 
                     <p>
-                        <h4>3. Perform Clean-up Step</h4>
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="customCheck1" name="CleanUp">
                             <label class="custom-control-label big-checkbox" for="customCheck1">
-                                <h5 id="big-checkbox-label">Enable</h5>
+                                <h4 id="big-checkbox-label">Perform Clean-Up Step</h4>
                             </label>
+                            <small id="cleanUpHelpBlock" class="form-text text-muted">
+                            Whether to perform recursive cleanup step to remove pieces of background detected as part of the colony. This is helpful in certain imaging conditions but can result in parts of real colonies being missed; we recommend first trying analysis on a set of images without cleanup first. Images taken under identical imaging conditions should be consistent in whether or not they require cleanup.
+                            </small>
                             <div id="conditional_part">
                                 <medium>
                                     <strong>Max Proportion Exposed Edge</strong>
                                 </medium>
-                                <input type="text" class="form-control" placeholder="0.25" aria-label="max_prop_exposed_edge" name="MaxProportionExposedEdge">
+                                <input type="text" class="form-control" placeholder="0.75" aria-label="max_prop_exposed_edge" name="MaxProportionExposedEdge">
                                 <small id="maxProportionEdgeHelpBlock" class="form-text text-muted">
-                                The max proportion of the edge of a detected colony ‘pie piece’ that is allowed to not touch a neighboring pie piece before being removed during cleanup step. Recommended to be set to 0.25-0.4. Only applies during cleanup steps.
+                                The max proportion of the edge of a detected colony ‘pie piece’ that is allowed to not touch a neighboring pie piece before being removed during cleanup step. Recommended to be set to 0.6-0.75. Only applies during cleanup steps.
                                 </small>
                             </div>
-                            
-                            <small id="cleanUpHelpBlock" class="form-text text-muted">
-                            Whether to perform recursive cleanup step to remove pieces of background detected as part of the colony. This is helpful in certain imaging conditions but can result in parts of real colonies being missed; we recommend first trying analysis on a set of images without cleanup first. Images taken under identical imaging conditions should be consistent in whether or not they require cleanup.
-                            </small>
                         </div>
 
-                    </p>
 
-                    <!-- Minimum Growth Time -->
-                    <p>
-                        <div>
-                            <label><h4>4. Minimum Growth Time</h4></label>
-                                <input type="text" class="form-control" placeholder="4" aria-label="minimum_growth_time" name="MinimumGrowthTime" id="minimumgrowthtime">
-                                <small id="MinimumGrowthTimeHelpBlock" class="form-text text-muted">
-                                    Smallest number of timepoints in which an object needs to be independently tracked in order to be considered a colony; important for removing objects like debris from analysis
-                                    (enter int, default = 4, must be >=0 )
-                                </small>
-                        </div>
                     </p>
 
                      <!-- Growth Window Timepoints -->
                      <p>
                         <div>
-                            <label><h4>5. Growth Window Timepoints</h4></label>
+                            <label><h4>Growth Window Timepoints</h4></label>
                         
                             <input type="text" class="form-control" placeholder="0" aria-label="growth_window_timepoints" name="GrowthWindowTimepoints" id="growthwindowtimepoints">
                             <small id="GrowthWindowTimepointsHelpBlock" class="form-text text-muted">
                                 Number of timepoints to include in growth rate calculation. 
                                 If set to 0, use all timepoints to calculate growth rate; 
                                 otherwise, report the highest growth rate for a colony that includes at least minimum_timepoint_number
-                                (enter int, default = 0, must be >=1)
+                                (enter an integer, default = 0, must be >=0)
                             </small>
                         </div>
                     </p>
@@ -144,11 +128,11 @@
                     <!-- Timepoint Spacing -->
                     <p>
                         <div>
-                            <label><h4>6. Timepoint Spacing</h4></label>
+                            <label><h4>Timepoint Spacing</h4></label>
                         
                             <input type="text" class="form-control" placeholder="3600" aria-label="timepoint_spacing" name="TimepointSpacing" id="timepointspacing">
                             <small id="TimepointSpacingHelpBlock" class="form-text text-muted">
-                                The number of seconds elapsed between each timepoint (enter int, default = 3600)
+                                The number of seconds elapsed between each timepoint (enter an integer, default = 3600)
                             </small>
                         </div>
                     </p>
@@ -175,7 +159,7 @@
                     </div>
 
                     <small id="collectEmailHelpBlock" class="form-text text-muted">
-                        Why we would want this...
+                        While sharing your analysis data with the Siegal lab is not required, seeing how PIE performs on user-supplied images will allow us to improve this program. We would therefore appreciate your permission to look at your images; of course, we will not share any of them outside the Siegal lab without first getting your permission.
                     </small>
                     </p>
                 
@@ -188,7 +172,7 @@
 
             <div class="link" style="width: 18rem;">
                   <a href="https://www.biorxiv.org/content/10.1101/253724v2.full" target="_blank" class="card-link">Read Paper</a>
-                  <a href="https://github.com/Siegallab" target="_blank" class="card-link">Download Codes</a>
+                  <a href="https://github.com/Siegallab/PIE" target="_blank" class="card-link">Download Code</a>
             </div>
             <br>
     
