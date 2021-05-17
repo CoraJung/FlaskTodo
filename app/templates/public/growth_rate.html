@@ -25,6 +25,7 @@
 
                 <div class="form-group">
                     <label><h4>Upload multiple images</h4></label>
+                    <p>Upload images of multiple timepoints from a single imaging position</p>
                     <div class="custom-file">
                         <input
                             oninput="handleFileSelect(this);"
@@ -45,6 +46,7 @@
 
                     </div>
 
+                    <div id="image-list-label" class="row" style="margin: 20px 0px;"></div>
                     <div id="image-list" class="row" style="margin: 20px 0px;"></div>
 
                     <hr>
@@ -191,7 +193,10 @@
     // show the names and sizes of files selected by client (show before hitting submit button)
     var image_dict = {}
     function handleFileSelect(element){
-        
+
+        // Add directions label for image list
+        imageListLabelDiv = document.getElementById('image-list-label');
+        imageListLabelDiv.innerHTML = "Use the arrows to arrange the image files in consecutive time order";
 
         const files = element && element.files;
         if (!files) return;
