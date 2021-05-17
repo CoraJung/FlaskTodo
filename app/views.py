@@ -269,7 +269,7 @@ def upload_image_cr():
             save_path = os.path.join(input_path, filename)
             file.save(save_path)
 
-            # run analysis 
+            # run and time analysis 
             analysis_start_time = time.process_time()
             colony_mask, colony_property_df = analyze_single_image(
                 input_im_path=save_path, output_path=output_path, image_type=image_type,
@@ -279,14 +279,18 @@ def upload_image_cr():
             analysis_time = analysis_stop_time-analysis_start_time
             flash("File(s) successfully analyzed, commencing data upload", "info")
 
+            # get number of detected colonies
+            detected_colonies = colony_property_df.index.size
             # create a unique key to attach to original input images when they are first created.
             unique_file_key = str(uuid4())
 
             # upload input files to s3
             upload_file_s3(bucket="pie-colony-recognition-data", file_type="original", folder_name="cr_processed", path=input_path, unique_key=unique_file_key)
             # upload processed files to s3
-            boundary_im_url, website_df, df_to_render = upload_file_s3(bucket="pie-colony-recognition-data", file_type="processed", folder_name="cr_processed", path=output_path, unique_key=unique_file_key)
+            boundary_im_url, website_df, df_dict = upload_file_s3(bucket="pie-colony-recognition-data", file_type="processed", folder_name="cr_processed", path=output_path, unique_key=unique_file_key)
             flash("File(s) successfully uploaded", "info")
+
+            df_to_render = df_dict['colony_properties']
 
             # delete input-output directories if no permission to keep 
             # them, move them if permission granted
@@ -296,6 +300,7 @@ def upload_image_cr():
                 boundary_im_url=boundary_im_url,
                 website_df=website_df,
                 analysis_time=round(analysis_time,1),
+                detected_colonies = detected_colonies,
                 col_prop_tables=[df_to_render.round(1).to_html(classes='styled-table', justify = 'center', header=True, index=False)]
                 )
 
@@ -392,9 +397,16 @@ def upload_image_gr():
     upload_file_s3(bucket="pie-growth-rate-data", file_type="original", folder_name="gr_processed", 
         path=input_path, unique_key=unique_key)
     # upload processed files to s3
-    movie_url, website_df, df_to_render = upload_file_s3(bucket="pie-growth-rate-data", 
+    movie_url, website_df, df_dict = upload_file_s3(bucket="pie-growth-rate-data", 
         file_type="processed", folder_name="gr_processed", path=output_path, unique_key=unique_key)
     flash("File(s) successfully uploaded", "info")
+
+    gr_df = df_dict['gr_df']
+    col_prop_df = df_dict['colony_properties']
+
+    # get number of colonies
+    tracked_colonies = len(col_prop_df.cross_phase_tracking_id.unique())
+    growth_colonies = gr_df.index.size
 
     # delete input-output directories if no permission to keep 
     # them, move them if permission granted
@@ -405,7 +417,9 @@ def upload_image_gr():
         movie_url = movie_url,
         website_df=website_df,
         analysis_time = round(analysis_time,1),
-        gr_tables=[df_to_render.round(3).to_html(classes='styled-table', justify = 'center', header=True, index=False)])
+        growth_colonies = growth_colonies,
+        tracked_colonies = tracked_colonies,
+        gr_tables=[gr_df.round(3).to_html(classes='styled-table', justify = 'center', header=True, index=False)])
 
 
 def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed", path=None, unique_key=None):
@@ -494,6 +508,7 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
         zip_analysis_folder(zipname, path)
 
         website_df_list = []
+        df_dict = {}
         img_url = None
         for root, dirs, files in os.walk(path, topdown=True):
             for filename in files:
@@ -541,7 +556,10 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
 
                         if filename=="growth_rates_combined.csv":
                             print("url for client to download: ", url)
-                            df_to_render = pd.read_csv(current_name)
+                            df_dict['gr_df'] = pd.read_csv(current_name)
+
+                        if filename=="colony_properties_combined.csv":
+                            df_dict['colony_properties'] = pd.read_csv(current_name)
 
                         if "movies" in root:
                             img_url = url
@@ -553,14 +571,14 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
                         
                         # for csv file that needs to be rendered in table format
                         if "single_im_colony_properties" in root:
-                            df_to_render = pd.read_csv(current_name)
+                            df_dict['colony_properties'] = pd.read_csv(current_name)
 
                     if not success:
                         abort(404)
 
         website_df = pd.merge(website_df_template, pd.concat(website_df_list))
 
-        return img_url, website_df, df_to_render
+        return img_url, website_df, df_dict
 
 
 

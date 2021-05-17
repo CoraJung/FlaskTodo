@@ -13,7 +13,9 @@
                 We find that for <b>yeast and bigger cells</b>, 10-20x magnification works best; for <b>bacteria</b>, 40-60x magnification is optimal.<br> 
                 PIE works best with slightly defocused images, in which cells appear as slightly brighter than the image background, with fuzzy dark boundaries.
             </p>
-
+            <small class="form-text text-muted">
+                (This app does not work in Safari, please use a different browser)
+            </small>
             <hr>
         
             <form action="/colony-recognition" method="POST" enctype="multipart/form-data">
@@ -177,7 +179,7 @@
         for (const image of images) {
             const inputElement = document.createElement("div");
             inputElement.className = '.col-md-2';
-            inputElement.innerText = `${image.name}\nsize: ${image.size}`;
+            inputElement.innerText = `${image.name}\nsize: ${(image.size/(1024*1024)).toFixed(3)}MB`;
             inputElement.style.backgroundColor = 'gainsboro';
             inputElement.style.padding = '20px';
             inputElement.style.borderRadius = '6px';
