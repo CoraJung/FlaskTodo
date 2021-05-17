@@ -185,86 +185,66 @@
 {% block script %}
 <script>
     // show the names and sizes of files selected by client (show before hitting submit button)
-//    var imageListDiv = document.getElementById('image-list');
-    var images = []
+    var image_dict = {}
     function handleFileSelect(element){
         
-//        imageListDiv.innerHTML = "";
 
         const files = element && element.files;
         if (!files) return;
 
         console.log(element.files)
 
-        const images_temp = [...files]
+        const images = [...files]
             .filter(file => /image/i.test(file.type))
 
-        images.push.apply(images,images_temp)
-
         // order selected files
-        var moveLeft = (event, index) => {
+        var moveLeft = event => {
+            index = event.target.index
             // move files to the left
             console.log(index)
+            console.log(image_dict)
             if (index>0){
-                tmp = images[index];
-                images[index] = images[index - 1];
-                images[index - 1] = tmp;
+                tmp_im = image_dict[index];
+                image_dict[index] = image_dict[index - 1];
+                image_dict[index - 1] = tmp_im;
 
-                tmp_div = set_div_array[index];
-                set_div_array[index] = set_div_array[index - 1];
-                set_div_array[index - 1] = tmp_div;
-
-                index = index-1;
-
-                fill_list_div(set_div_array);
-                array_to_FileList(images);
+                reset_im_order(image_dict);
             }
      
             console.log('move this file to the left');
             console.log('-------')
-            console.log(images)
             console.log(index)
             console.log(element.files)
+            console.log(image_dict)
         }
 
         var moveRight = event => {
+            index = event.target.index
             // move files to the right
             console.log(index)
-            if (index < (set_div_array.length-1)){
-                tmp = images[index];
-                images[index] = images[index + 1];
-                images[index + 1] = tmp;  
+            console.log(image_dict)
+            if (index < (Object.keys(image_dict).length-1)){
+                tmp_subdict = image_dict[index];
+                image_dict[index] = image_dict[index + 1];
+                image_dict[index + 1] = tmp_subdict;
 
-                tmp_div = set_div_array[index];
-                set_div_array[index] = set_div_array[index + 1];
-                set_div_array[index + 1] = tmp_div;   
-
-                index = index+1;
-
-                fill_list_div(set_div_array);
-                array_to_FileList(images);
+                reset_im_order(image_dict);
 
             }
      
             console.log('move this file to the right');
             console.log('-------')
-            console.log(images)
             console.log(index)
             console.log(element.files)
+            console.log(image_dict)
         }
 
-        var set_div_array = [];
-
-        let index = 0;
-
-        // initialize images
-        for (const image of images) {
+        function create_set_div(im, index){
             var imageSetDiv = document.createElement('div')
-            imageSetDiv.style.position = "relative"
 
             const inputElement = document.createElement("div");
             inputElement.className = '.col-md-2';
-            inputElement.innerText = `${image.name}\nsize: ${(image.size/(1024*1024)).toFixed(3)}MB`;
+            inputElement.innerText = `${im.name}\nsize: ${(im.size/(1024*1024)).toFixed(3)}MB`;
             inputElement.style.backgroundColor = 'gainsboro';
             inputElement.style.padding = '8px';
             inputElement.style.borderRadius = '6px';
@@ -286,6 +266,7 @@
             buttonElement_left.style.width = '50%';
             buttonElement_left.innerText = '<';
             buttonElement_left.type = 'button';
+            buttonElement_left.index = index
 
             const buttonElement_right = document.createElement("button");
             buttonElement_right.className = '.col-md-2';
@@ -297,26 +278,32 @@
             buttonElement_right.style.width = '50%';
             buttonElement_right.innerText = '>';
             buttonElement_right.type = 'button';
+            buttonElement_right.index = index;
             
-            var idx = index;
-            buttonElement_left.addEventListener('click', (event) => moveLeft(event, idx));
+            buttonElement_left.addEventListener('click', moveLeft);
             buttonElement_right.addEventListener('click', moveRight);
 
             imageSetDiv.appendChild(inputElement);
             imageSetDiv.appendChild(buttonElement_left);
             imageSetDiv.appendChild(buttonElement_right);
 
-//            imageListDiv.appendChild(imageSetDiv);
-            set_div_array.push(imageSetDiv)
+            return imageSetDiv;
+        }
 
+        // Fill initial image_dict
+        let index = 0;
+        for (const image of images) {
+            image_dict[index] = image;
             index++;
         }
 
-        function fill_list_div(div_array){
+        function create_list_div(dict){
             imageListDiv = document.getElementById('image-list');
             imageListDiv.innerHTML = "";
-            for (image_div of div_array) {
-                imageListDiv.appendChild(image_div);
+            for (var i = 0, len = Object.keys(dict).length; i<len; i++) {
+                im = dict[i]
+                imSetDiv = create_set_div(im, i);
+                imageListDiv.appendChild(imSetDiv);
             }
         }
 
@@ -326,7 +313,17 @@
             element.files = b.files
         }
 
-        fill_list_div(set_div_array);
+        function reset_im_order(dict) {
+            var file_array = [];
+            for (var i = 0, len = Object.keys(dict).length; i<len; i++) {
+                file_array.push(dict[i]);
+            }
+            create_list_div(dict);
+            array_to_FileList(file_array);
+        }
+
+        reset_im_order(image_dict);
+        console.log(image_dict)
 
         var firstFile = files && files[0];
         if (!firstFile) return;

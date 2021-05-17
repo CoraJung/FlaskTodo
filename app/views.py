@@ -320,16 +320,6 @@ def upload_image_gr():
     
     result = request.form
 
-    json_data = request.get_json()
-    json_data_2 = request.json
-
-    print('\nJSON')
-    print(request.method)
-    print(json_data)
-    print(json_data_2)
-    print(list(result.items()))
-    print('\n\n\n')
-
     # receive parameters from client
     for key, value in result.items():
         print(key, value)
