@@ -223,6 +223,15 @@ def check_permission_params(form_dict):
     user_email = form_dict["UserEmail"]
     return(review_permission, user_email)
 
+def check_growth_params(form_dict):
+    """
+    Return parameter values related to growth rate analysis
+    """    
+    growth_window_timepoints = int(form_dict["GrowthWindowTimepoints"])
+    timepoint_spacing = int(form_dict["TimepointSpacing"])
+    return(growth_window_timepoints, timepoint_spacing)
+
+
 @app.route("/colony-recognition", methods=["GET", "POST"])
 def upload_image_cr():
     # set default values
@@ -234,7 +243,6 @@ def upload_image_cr():
     result = request.form
 
     site_output_dict = dict(result.items())
-    print(site_output_dict)
 
     # get image analysis parameters
     image_type, hole_fill_area, cleanup, max_proportion_exposed_edge = \
@@ -319,12 +327,7 @@ def upload_image_cr():
 @app.route('/growth-rate', methods=['GET','POST'])
 def upload_image_gr():
     # set default values
-    total_timepoint_num = 1
-    hole_fill_area = np.inf
-    cleanup = False
-    max_proportion_exposed_edge = 0.75
     timepoint_spacing = 3600
-    main_channel_imagetype = 'brightfield'
     growth_window_timepoints = 0
 
     user_email = ""
@@ -335,34 +338,16 @@ def upload_image_gr():
     
     result = request.form
 
-    # receive parameters from client
-    for key, value in result.items():
-        print(key, value)
+    site_output_dict = dict(result.items())
 
-        if key == "ImageType" and value == "phasecontrast":
-            main_channel_imagetype = value
-        
-        elif key == "HoleFillArea":
-            if value == "inf" or value == "":
-                pass
-            else:
-                hole_fill_area = int(value)
-        
-        elif key == "MaxProportionExposedEdge" and value != "":
-            cleanup = True
-            max_proportion_exposed_edge = float(value)
-        
-        elif key == "GrowthWindowTimepoints" and value != "":
-            growth_window_timepoints = int(value)
+    # get image analysis parameters
+    image_type, hole_fill_area, cleanup, max_proportion_exposed_edge = \
+        check_image_processing_params(site_output_dict)
 
-        elif key == "TimepointSpacing" and value != "":
-            timepoint_spacing = int(value)
-        
-        elif key == "UserEmail" and value != "":
-            user_email = value
-        
-        elif key == "Disclaimer":
-            review_permission = True
+    review_permission, user_email = check_permission_params(site_output_dict)
+
+    growth_window_timepoints, timepoint_spacing = \
+        check_growth_params(site_output_dict)
 
     files = request.files.getlist("image")
     print(files)
