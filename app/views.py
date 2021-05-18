@@ -192,45 +192,55 @@ def zip_analysis_folder(zipname, path):
     # clean up directories
     shutil.rmtree(temp_zip_location)
 
-@app.route("/colony-recognition", methods=["GET", "POST"])
+def check_image_processing_params(form_dict):
+    """
+    Return parameter values related to image processing based on 
+    website input
+    """
+    image_type = form_dict["ImageType"]
+    hole_fill_area_str = form_dict["HoleFillArea"]
+    if hole_fill_area_str.lower().strip()=='inf':
+        hole_fill_area = np.inf
+    else:
+        hole_fill_area = int(hole_fill_area_str)
+    if "CleanUp" in form_dict:
+        cleanup = True
+        max_proportion_exposed_edge = \
+            float(form_dict["MaxProportionExposedEdge"])
+    else:
+        cleanup = False
+        max_proportion_exposed_edge = np.nan
+    return(image_type, hole_fill_area, cleanup, max_proportion_exposed_edge)
 
+def check_permission_params(form_dict):
+    """
+    Return parameter values related to permissions to review images
+    """    
+    if "ReviewPermission" in form_dict:
+        review_permission = True
+    else:
+        review_permission = False
+    user_email = form_dict["UserEmail"]
+    return(review_permission, user_email)
+
+@app.route("/colony-recognition", methods=["GET", "POST"])
 def upload_image_cr():
     # set default values
-    hole_fill_area=np.inf
-    cleanup=False
-    max_proportion_exposed_edge=0.25
     save_extra_info=True
-    image_type="brightfield"
-    user_email = ""
-    review_permission = False
-
-    result = request.form
-
-    # set parameters
-    for key, value in result.items():
-        print(key, value)
-
-        if key == "ImageType" and value == "phasecontrast":
-            image_type = value
-        
-        elif key == "HoleFillArea":
-            if value == "inf" or value == "":
-                pass
-            else:
-                hole_fill_area = int(value)
-        
-        elif key == "MaxProportionExposedEdge" and value != "":
-            cleanup = True
-            max_proportion_exposed_edge = float(value)
-        
-        elif key == "UserEmail" and value != "":
-            user_email = value
-        
-        elif key == "Disclaimer":
-            review_permission = True
 
     if request.method != "POST":
         return render_template("public/colony_recognition.html")
+
+    result = request.form
+
+    site_output_dict = dict(result.items())
+    print(site_output_dict)
+
+    # get image analysis parameters
+    image_type, hole_fill_area, cleanup, max_proportion_exposed_edge = \
+        check_image_processing_params(site_output_dict)
+
+    review_permission, user_email = check_permission_params(site_output_dict)
 
     if not request.files:
         flash("⚠️ Please upload an image file", "error")
@@ -381,6 +391,7 @@ def upload_image_gr():
         file.save(save_path)
     
     print("run growth rate analysis")
+    flash("Analyzing files", "info")
     analysis_start_time = time.process_time()
     run_default_growth_rate_analysis(input_path=input_path, output_path=output_path,
         total_timepoint_num=total_timepoint_num, hole_fill_area=hole_fill_area, cleanup=cleanup,

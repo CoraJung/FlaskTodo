@@ -11,7 +11,7 @@
             <p class="lead text-justify">
                 <br>For the colomy recognition module of this website, upload a single brightfield or phase contrast image.<br>
                 We find that for <b>yeast and bigger cells</b>, 10-20x magnification works best; for <b>bacteria</b>, 40-60x magnification is optimal.<br> 
-                PIE works best with slightly defocused images, in which cells appear as slightly brighter than the image background, with fuzzy dark boundaries.
+                For <b>brightfield imaging</b>, ideal images for PIE analysis are slightly defocused, with dark outlining surrounding cells that are brighter than the background. For <b>phase-contrast imaging</b>, a wide range of imaging conditions are acceptable.
             </p>
             <small class="form-text text-muted">
                 (This app does not work in Safari, please use a different browser)
@@ -63,11 +63,11 @@
                             <label><h4>Image Type</h4></label>
                         </div>
                         <div>
-                            <input id="imageTypeInput" name="ImageType" value="" style="display:none;">
+                            <input id="imageTypeInput" name="ImageType" value="brightfield" style="display:none;">
                             <div
                                 type="text"
                                 class="img-type-btn btn btn-outline-primary active"
-                                id="brightField"
+                                id="brightfield"
                                 value="Brightfield"
                                 aria-pressed="true"
                             >
@@ -88,9 +88,9 @@
                     <p>
                         <div>
                         <label><h4>Hole Fill Area</h4></label>
-                        <input type="text" class="form-control" placeholder="inf" aria-label="hole fill area" name="HoleFillArea" id="holefillarea">
+                        <input type="text" pattern="^([0-9]+|Inf|inf)$"class="form-control" placeholder="inf" aria-label="hole fill area" name="HoleFillArea" id="holefillarea" value="inf">
                         <small id="holeFillAreaHelpBlock" class="form-text text-muted">
-                            Size (in pixels) of the largest empty space between cells (on the inside of a colony) to consider part of the colony. Intercell space is not typically easily identified in colonies of round cells; for these we recommend first trying the default setting (Inf). However, intercell space can often be accurately parsed in colonies of rod-shaped cells.
+                            Size (in pixels) of the largest empty space between cells (on the inside of a colony) to consider part of the colony. Intercell space is not typically easily identified in colonies of round cells; for these we recommend first trying the default setting (inf). However, intercell space can often be accurately parsed in colonies of rod-shaped cells.
                         </small>
                         </div>
                     </p>
@@ -99,7 +99,7 @@
 
                     <p>
                         <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="customCheck1" name="CleanUp">
+                            <input type="checkbox" class="custom-control-input" id="customCheck1" name="CleanUp" value="CleanUp">
                             <label class="custom-control-label big-checkbox" for="customCheck1">
                                 <h4 id="big-checkbox-label">Perform Clean-Up Step</h4>
                             </label>
@@ -110,7 +110,7 @@
                                 <medium>
                                     <strong>Max Proportion Exposed Edge</strong>
                                 </medium>
-                                <input type="text" class="form-control" placeholder="0.75" aria-label="max_prop_exposed_edge" name="MaxProportionExposedEdge">
+                                <input type="number" class="form-control" value=0.75 min=0 max=1 step=any placeholder=0.75 aria-label="max_prop_exposed_edge" name="MaxProportionExposedEdge">
                                 <small id="maxProportionEdgeHelpBlock" class="form-text text-muted">
                                 The max proportion of the edge of a detected colony ‘pie piece’ that is allowed to not touch a neighboring pie piece before being removed during cleanup step. Recommended to be set to 0.6-0.75. Only applies during cleanup steps.
                                 </small>
@@ -122,10 +122,10 @@
 
                     <hr>
 
-                    <!-- Disclaimer-->
+                    <!-- ReviewPermission-->
                     <p>
                         <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="customCheck2" name="Disclaimer">
+                            <input type="checkbox" class="custom-control-input" id="customCheck2" name="ReviewPermission" value="ReviewPermission">
                             <label class="custom-control-label" for="customCheck2">
                                 "I give the Siegal lab permission to review these images and the image analysis output” (optional)
                             </label>
@@ -138,7 +138,7 @@
                         <div class="input-group-prepend">
                           <span class="input-group-text" id="basic-addon1">User Email(optional)</span>
                         </div>
-                        <input type="text" class="form-control" placeholder="" aria-label="UserEmail" name="UserEmail">
+                        <input type="email" class="form-control" placeholder="" aria-label="UserEmail" name="UserEmail" value="">
                     </div>
 
                     <small id="collectEmailHelpBlock" class="form-text text-muted">
