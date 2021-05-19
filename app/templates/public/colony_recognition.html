@@ -44,107 +44,12 @@
                     <div id="image-list" class="row" style="margin: 20px 0px;"></div>
                     <hr>
 
-                    <!-- <h5>Image Analysis Parameter Selection</h5> -->
-                    <!-- Image Type -->
-                    <p>
-                        <!-- <div class="dropdown">
-                            <label>Select Image Type</label>
-                            <div>
-                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Image Type
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" name="ImageType">
-                            <a class="dropdown-item" href="#">Brightfield</a>
-                            <a class="dropdown-item" href="#">Phase Contrast</a>
-                            </div>
-                            </div>
-                        </div> -->
-                        <div>
-                            <label><h4>Image Type</h4></label>
-                        </div>
-                        <div>
-                            <input id="imageTypeInput" name="ImageType" value="brightfield" style="display:none;">
-                            <div
-                                type="text"
-                                class="img-type-btn btn btn-outline-primary active"
-                                id="brightfield"
-                                value="Brightfield"
-                                aria-pressed="true"
-                            >
-                                Brightfield
-                            </div>
-                            <div
-                                type="text"
-                                class="img-type-btn btn btn-outline-primary"
-                                id="phasecontrast"    
-                                value="Phase Contrast"
-                            >
-                                Phase Contrast
-                            </div>
-                        </div>
-                    </p>
+                    {% include "public/templates/image_analysis_params.html" %}
 
-                    <!-- Hole Fill Area -->
-                    <p>
-                        <div>
-                        <label><h4>Hole Fill Area</h4></label>
-                        <input type="text" pattern="^([0-9]+|Inf|inf)$"class="form-control" placeholder="inf" aria-label="hole fill area" name="HoleFillArea" id="holefillarea" value="inf">
-                        <small id="holeFillAreaHelpBlock" class="form-text text-muted">
-                            Size (in pixels) of the largest empty space between cells (on the inside of a colony) to consider part of the colony. Intercell space is not typically easily identified in colonies of round cells; for these we recommend first trying the default setting (inf). However, intercell space can often be accurately parsed in colonies of rod-shaped cells.
-                        </small>
-                        </div>
-                    </p>
-
-                    <!-- Clean Up -->
-
-                    <p>
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="customCheck1" name="CleanUp" value="CleanUp">
-                            <label class="custom-control-label big-checkbox" for="customCheck1">
-                                <h4 id="big-checkbox-label">Perform Clean-Up Step</h4>
-                            </label>
-                            <small id="cleanUpHelpBlock" class="form-text text-muted">
-                            Whether to perform recursive cleanup step to remove pieces of background detected as part of the colony. This is helpful in certain imaging conditions but can result in parts of real colonies being missed; we recommend first trying analysis on a set of images without cleanup first. Images taken under identical imaging conditions should be consistent in whether or not they require cleanup.
-                            </small>
-                            <div id="conditional_part">
-                                <medium>
-                                    <strong>Max Proportion Exposed Edge</strong>
-                                </medium>
-                                <input type="number" class="form-control" value=0.75 min=0 max=1 step=any placeholder=0.75 aria-label="max_prop_exposed_edge" name="MaxProportionExposedEdge">
-                                <small id="maxProportionEdgeHelpBlock" class="form-text text-muted">
-                                The max proportion of the edge of a detected colony ‘pie piece’ that is allowed to not touch a neighboring pie piece before being removed during cleanup step. Recommended to be set to 0.6-0.75. Only applies during cleanup steps.
-                                </small>
-                            </div>
-                        </div>
+                    {% include "public/templates/review_permission_params.html" %}
 
 
-                    </p>
-
-                    <hr>
-
-                    <!-- ReviewPermission-->
-                    <p>
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="customCheck2" name="ReviewPermission" value="ReviewPermission">
-                            <label class="custom-control-label" for="customCheck2">
-                                "I give the Siegal lab permission to review these images and the image analysis output” (optional)
-                            </label>
-                        </div>
-                    </p>
-
-                    <!-- Collect Client Email Data-->
-                    <p>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                          <span class="input-group-text" id="basic-addon1">User Email(optional)</span>
-                        </div>
-                        <input type="email" class="form-control" placeholder="" aria-label="UserEmail" name="UserEmail" value="">
-                    </div>
-
-                    <small id="collectEmailHelpBlock" class="form-text text-muted">
-                        While sharing your analysis data with the Siegal lab is not required, seeing how PIE performs on user-supplied images will allow us to improve this program. We would therefore appreciate your permission to look at your images; of course, we will not share any of them outside the Siegal lab without first getting your permission.
-                    </small>
-                    </p>
+                    
                 </div>
 
                 <button type="submit" class="btn btn-primary">Run Analysis</button>
@@ -196,54 +101,8 @@
         document.cookie = `filesize=${fileSize}`
     }
 
-    // hide max proportion exposed edge when cleanup is not checked
-    $('#customCheck1').change(function() {
-        if (this.checked) {
-            $("#conditional_part").show();
-        } else {
-            $("#conditional_part").hide();
-        }
-    });
-
-    // change class name as image type buttons selected
-
-    var btn_list = Array.from($('.img-type-btn'));
-
-    var setButtons = event => {
-        // reset button styles
-        btn_list.forEach(_ => _.className = 'img-type-btn btn btn-outline-primary');
-
-        var target = event.target;
-        if (!target) return;
-
-        // set target button style
-        target.className = 'img-type-btn btn btn-primary';
-        
-        // set image type formData
-        var inputField = $('#imageTypeInput')[0];
-        inputField.value = target.id;
-    }
-
-    btn_list.forEach(element => {
-        if (!element.addEventListener) return;
-        if (typeof element.addEventListener !== 'function') return;
-        
-        element.addEventListener('click', setButtons);
-    })
-
-    // limit input value type on hole fill area to numbers and inf only
-    var limitOnlyNum = event => {
-        var target = event.target;
-        var value = target.value;
-
-        if (value === "inf") return;
-        if (value == +value) return;
-        
-        target.value = '';
-    }
-
-    $("#holefillarea")[0].addEventListener('change', limitOnlyNum);
-
+    {% include "public/scripts/image_analysis_param_script.js" %}
+    {% include "public/scripts/review_permission_script.js" %}
 
 </script>
 

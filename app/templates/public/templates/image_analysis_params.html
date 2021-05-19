@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+
+<!-- Image Type -->
+<p>
+    <div>
+        <label><h4>Image Type</h4></label>
+    </div>
+    <div>
+        <input id="imageTypeInput" name="ImageType" value="brightfield" style="display:none;">
+        <div
+            type="text"
+            class="img-type-btn btn btn-outline-primary active"
+            id="brightfield"
+            value="Brightfield"
+            aria-pressed="true"
+        >
+            Brightfield
+        </div>
+        <div
+            type="text"
+            class="img-type-btn btn btn-outline-primary"
+            id="phasecontrast"    
+            value="Phase Contrast"
+        >
+            Phase Contrast
+        </div>
+    </div>
+</p>
+
+<!-- Hole Fill Area -->
+<p>
+    <div>
+    <label><h4>Hole Fill Area</h4></label>
+    <input type="text" pattern="^([0-9]+|Inf|inf)$"class="form-control" placeholder="inf" aria-label="hole fill area" name="HoleFillArea" id="holefillarea" value="inf">
+    <small id="holeFillAreaHelpBlock" class="form-text text-muted">
+        Size (in pixels) of the largest empty space between cells (on the inside of a colony) to consider part of the colony. Intercell space is not typically easily identified in colonies of round cells; for these we recommend first trying the default setting (inf). However, intercell space can often be accurately parsed in colonies of rod-shaped cells.
+    </small>
+    </div>
+</p>
+
+<!-- Clean Up -->
+
+<p>
+    <div class="custom-control custom-checkbox">
+        <input type="checkbox" class="custom-control-input" id="customCheck1" name="CleanUp" value="CleanUp">
+        <label class="custom-control-label big-checkbox" for="customCheck1">
+            <h4 id="big-checkbox-label">Perform Clean-Up Step</h4>
+        </label>
+        <small id="cleanUpHelpBlock" class="form-text text-muted">
+        Whether to perform recursive cleanup step to remove pieces of background detected as part of the colony. This is helpful in certain imaging conditions but can result in parts of real colonies being missed; we recommend first trying analysis on a set of images without cleanup first. Images taken under identical imaging conditions should be consistent in whether or not they require cleanup.
+        </small>
+        <div id="conditional_part">
+            <medium>
+                <strong>Max Proportion Exposed Edge</strong>
+            </medium>
+            <input type="number" class="form-control" value=0.75 min=0 max=1 step=any placeholder=0.75 aria-label="max_prop_exposed_edge" name="MaxProportionExposedEdge">
+            <small id="maxProportionEdgeHelpBlock" class="form-text text-muted">
+            The max proportion of the edge of a detected colony ‘pie piece’ that is allowed to not touch a neighboring pie piece before being removed during cleanup step. Recommended to be set to 0.6-0.75. Only applies during cleanup steps.
+            </small>
+        </div>
+    </div>
+
+
+</p>

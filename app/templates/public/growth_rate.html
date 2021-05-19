@@ -11,7 +11,7 @@
                 <br>For the growth rate module of this website, upload a single timeseries (all images at one xy position) 
                 of brightfield or phase contrast micrographs.<br>
                 We find that for <b>yeast and bigger cells</b>, 10-20x magnification works best; for <b>bacteria</b>, 40-60x magnification is optimal.<br> 
-                PIE works best with slightly defocused images, in which cells appear as slightly brighter than the image background, with fuzzy dark boundaries.<br> 
+                For <b>brightfield imaging</b>, ideal images for PIE analysis are slightly defocused, with dark outlining surrounding cells that are brighter than the background. For <b>phase-contrast imaging</b>, a wide range of imaging conditions are acceptable.<br> 
                 Arrange the micrographs below in consecutive order (please note that the images will be renamed t1xy1-t#xy1 in analysis output).<br>
             </p>
 
@@ -51,77 +51,16 @@
 
                     <hr>
                     
+                    <!-- Image Analysis Parameters-->
+                    {% include "public/templates/image_analysis_params.html" %}
 
-                    <!-- <h5>Growth Rate Analysis Parameter Selection</h5> -->
-                    <!-- Image Type -->
-                    <p>
-                        <div>
-                            <label><h4>Image Type</h4></label>
-                        </div>
-                        <div>
-                            <input id="imageTypeInput" name="ImageType" value="" style="display:none;">
-                            <div
-                                type="text"
-                                class="img-type-btn btn btn-outline-primary active"
-                                id="brightField"
-                                value="Brightfield"
-                                aria-pressed="true"
-                            >
-                                Brightfield
-                            </div>
-                            <div
-                                type="text"
-                                class="img-type-btn btn btn-outline-primary"
-                                id="phasecontrast"    
-                                value="Phase Contrast"
-                            >
-                                Phase Contrast
-                            </div>
-                        </div>
-                    </p>
-
-                    <!-- Hole Fill Area -->
-                    <p>
-                        <div>
-                        <label><h4>Hole Fill Area</h4></label>
-                        <input type="text" class="form-control" placeholder="inf" aria-label="hole fill area" name="HoleFillArea" id="holefillarea">
-                        <small id="holeFillAreaHelpBlock" class="form-text text-muted">
-                            Size (in pixels) of the largest empty space between cells (on the inside of a colony) to consider part of the colony. Intercell space is not typically easily identified in colonies of round cells; for these we recommend first trying the default setting (Inf). However, intercell space can often be accurately parsed in colonies of rod-shaped cells.
-                        </small>
-                        </div>
-                    </p>
-
-                    <!-- Clean Up -->
-
-                    <p>
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="customCheck1" name="CleanUp">
-                            <label class="custom-control-label big-checkbox" for="customCheck1">
-                                <h4 id="big-checkbox-label">Perform Clean-Up Step</h4>
-                            </label>
-                            <small id="cleanUpHelpBlock" class="form-text text-muted">
-                            Whether to perform recursive cleanup step to remove pieces of background detected as part of the colony. This is helpful in certain imaging conditions but can result in parts of real colonies being missed; we recommend first trying analysis on a set of images without cleanup first. Images taken under identical imaging conditions should be consistent in whether or not they require cleanup.
-                            </small>
-                            <div id="conditional_part">
-                                <medium>
-                                    <strong>Max Proportion Exposed Edge</strong>
-                                </medium>
-                                <input type="text" class="form-control" placeholder="0.75" aria-label="max_prop_exposed_edge" name="MaxProportionExposedEdge">
-                                <small id="maxProportionEdgeHelpBlock" class="form-text text-muted">
-                                The max proportion of the edge of a detected colony ‘pie piece’ that is allowed to not touch a neighboring pie piece before being removed during cleanup step. Recommended to be set to 0.6-0.75. Only applies during cleanup steps.
-                                </small>
-                            </div>
-                        </div>
-
-
-                    </p>
-
+                    <!-- Growth Parameters -->
                      <!-- Growth Window Timepoints -->
                      <p>
                         <div>
                             <label><h4>Growth Window Timepoints</h4></label>
                         
-                            <input type="text" class="form-control" placeholder="0" aria-label="growth_window_timepoints" name="GrowthWindowTimepoints" id="growthwindowtimepoints">
+                            <input type=number class="form-control" value=0 min=0 placeholder="0" aria-label="growth_window_timepoints" name="GrowthWindowTimepoints" id="growthwindowtimepoints">
                             <small id="GrowthWindowTimepointsHelpBlock" class="form-text text-muted">
                                 Number of timepoints to include in growth rate calculation. 
                                 If set to 0, use all timepoints to calculate growth rate; 
@@ -136,7 +75,7 @@
                         <div>
                             <label><h4>Timepoint Spacing</h4></label>
                         
-                            <input type="text" class="form-control" placeholder="3600" aria-label="timepoint_spacing" name="TimepointSpacing" id="timepointspacing">
+                            <input type="number" class="form-control" value=0  min=0 placeholder="3600" aria-label="timepoint_spacing" name="TimepointSpacing" id="timepointspacing">
                             <small id="TimepointSpacingHelpBlock" class="form-text text-muted">
                                 The number of seconds elapsed between each timepoint (enter an integer, default = 3600)
                             </small>
@@ -145,30 +84,9 @@
 
                     <hr>
 
-                    <!-- Disclaimer-->
-                    <p>
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="customCheck2" name="Disclaimer">
-                            <label class="custom-control-label" for="customCheck2">
-                                "I give the Siegal lab permission to review these images and the image analysis output (optional)”
-                            </label>
-                        </div>
-                    </p>
+                    <!-- ReviewPermission-->
+                    {% include "public/templates/review_permission_params.html" %}
 
-                    <!-- Collect Client Email Data-->
-                    <p>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                          <span class="input-group-text" id="basic-addon1">User Email(optional)</span>
-                        </div>
-                        <input type="text" class="form-control" placeholder="" aria-label="UserEmail" name="UserEmail">
-                    </div>
-
-                    <small id="collectEmailHelpBlock" class="form-text text-muted">
-                        While sharing your analysis data with the Siegal lab is not required, seeing how PIE performs on user-supplied images will allow us to improve this program. We would therefore appreciate your permission to look at your images; of course, we will not share any of them outside the Siegal lab without first getting your permission.
-                    </small>
-                    </p>
-                
                 </div>
 
                 <button type="submit" class="btn btn-primary" id="submit_button">Run Analysis</button>
@@ -190,6 +108,7 @@
 
 {% block script %}
 <script>
+
     // show the names and sizes of files selected by client (show before hitting submit button)
     var image_dict = {}
     function handleFileSelect(element){
@@ -342,53 +261,25 @@
 
     }
 
-    // hide max proportion exposed edge when cleanup is not checked
-    $('#customCheck1').change(function() {
-        if (this.checked) {
-            $("#conditional_part").show();
-        } else {
-            $("#conditional_part").hide();
-        }
-    });
+    {% include "public/scripts/image_analysis_param_script.js" %}
+    {% include "public/scripts/review_permission_script.js" %}
 
-    // change class name as image type buttons selected
-    var btn_list = Array.from($('.img-type-btn'));
+    // limit input value for growth_window_timepoints to depend on the number of files entered
+    var limitGrowthWindowNum = event => {
 
-    var setButtons = event => {
-        // reset button styles
-        btn_list.forEach(_ => _.className = 'img-type-btn btn btn-outline-primary');
-
-        var target = event.target;
-        if (!target) return;
-
-        // set target button style
-        target.className = 'img-type-btn btn btn-primary';
+        max_growth_window_val = Object.keys(image_dict).length;
         
-        // set image type formData
-        var inputField = $('#imageTypeInput')[0];
-        inputField.value = target.id;
-    }
-
-    btn_list.forEach(element => {
-        if (!element.addEventListener) return;
-        if (typeof element.addEventListener !== 'function') return;
-        
-        element.addEventListener('click', setButtons);
-    })
-
-    // limit input value type on hole fill area to numbers and inf only
-    var limitOnlyNum = event => {
         var target = event.target;
         var value = target.value;
+        console.log(value)
 
-        if (value === "inf") return;
-        if (value == +value) return;
-        
-        target.value = '';
+        if (!value || (value < 0) || (value > max_growth_window_val)){
+            console.log('yes')
+            target.value = 0
+        }
     }
 
-    $("#holefillarea")[0].addEventListener('change', limitOnlyNum);
-
+    $("#growthwindowtimepoints")[0].addEventListener('change', limitGrowthWindowNum);
 
 </script>
 {% endblock %}
