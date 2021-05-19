@@ -191,6 +191,7 @@ def zip_analysis_folder(zipname, path):
     os.rename(out_zip_path_initial+'.zip',out_zip_path_final+'.zip')
     # clean up directories
     shutil.rmtree(temp_zip_location)
+    return(out_zip_path_final+'.zip')
 
 def check_image_processing_params(form_dict):
     """
@@ -501,7 +502,7 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
             zipname = 'PIE_growth_analysis_folder'
         elif analysis_folder=='cr_processed':
             zipname = 'PIE_colony_recognition_folder'
-        zip_analysis_folder(zipname, path)
+        ziped_folder_path = zip_analysis_folder(zipname, path)
 
         website_df_list = []
         df_dict = {}
@@ -572,6 +573,9 @@ def upload_file_s3(bucket=None, file_type="original", folder_name="cr_processed"
                     if not success:
                         abort(404)
 
+        # after copying everything to website, remove zipped folder
+        os.remove(ziped_folder_path)
+        
         website_df = pd.merge(website_df_template, pd.concat(website_df_list))
 
         return img_url, website_df, df_dict
