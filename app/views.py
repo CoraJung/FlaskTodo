@@ -382,7 +382,7 @@ def upload_image_gr():
     run_default_growth_rate_analysis(input_path=input_path, output_path=output_path,
         total_timepoint_num=total_timepoint_num, hole_fill_area=hole_fill_area, cleanup=cleanup,
         max_proportion_exposed_edge=max_proportion_exposed_edge,
-        timepoint_spacing=timepoint_spacing, main_channel_imagetype=main_channel_imagetype,
+        timepoint_spacing=timepoint_spacing, main_channel_imagetype=image_type,
         growth_window_timepoints=growth_window_timepoints, total_xy_position_num=1,
         im_file_extension=extension
         )
