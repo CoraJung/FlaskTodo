@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 
 install_requires = [
-    'boto3>=1.9.66',
+    'google.cloud.storage',
     'pandas>=1.2.0',
     'numpy>=1.19.4',
     'flask>=1.1.2'
