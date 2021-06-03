@@ -18,63 +18,10 @@ storage_client = storage.Client()
 temp_storage_bucket = storage_client.bucket('pie-storage-temp')
 long_storage_bucket = storage_client.bucket('pie-storage-long')
 
-@app.template_filter("clean_date")
-def clean_date(dt):
-    return dt.strftime("%d %b %Y")
-
 @app.route("/")
 def index():
-
     print(f"Flask ENV is set to: {app.config['ENV']}")
     return render_template("public/index.html")
-
-@app.route("/jinja")
-def jinja():
-
-    my_name = "Cora"
-    
-    age = 28
-
-    langs = ["Python", "JavaScript", "Bash", "C", "Ruby"]
-
-    friends = {
-        "Tom":30,
-        "Amy":40,
-        "Tony":40,
-        "Clarissa":50
-    }
-
-    colors = ("Red", "Blue")
-
-    cool = True
-
-    class GitRemote:
-        def __init__(self, name, description, url):
-            self.name = name
-            self.description = description
-            self.url = url
-
-        def pull(self):
-            return f"Pulling repo {self.name}"
-
-        def clone(self):
-            return f"Cloning into {self.url}"
-
-    my_remote = GitRemote(name='Flask Jinja', description='Template Design Tutorial', url='https://github.com/CoraJung/Jinja.git')
-
-    def repeat(x, qty):
-        return x * qty
-
-    date = datetime.utcnow()
-
-    my_html = "<h1>This Is Some HTML</h1>"
-
-    suspicious = "<script>alert('You Got Hacked')</script>"
-
-    # return render_template("public/jinja.html", my_name=my_name, age=age, langs=langs, freinds=friends, 
-    #                                             colors=colors, cool=cool, GitRemote=GitRemote, repeat=repeat, 
-    #                                             my_remote=my_remote, date=date, my_html=my_html, suspicious=suspicious
-    #                                             )
 
 
 """
@@ -386,7 +333,6 @@ def upload_image_cr():
             col_prop_tables=[df_to_render.round(1).to_html(classes='styled-table', justify = 'center', header=True, index=False)]
             )
 
-#    return render_template("public/colony_recognition.html")
 
 @app.route('/growth-rate', methods=['GET','POST'])
 def upload_image_gr():
