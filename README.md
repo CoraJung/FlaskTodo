@@ -42,7 +42,7 @@ image_type="brightfield"
 
 **Growth Rate**
 ```
-total_timepoint_num = 1
+max_timepoint_num = 1
 hole_fill_area = np.inf
 cleanup = False
 max_proportion_exposed_edge = 0.75

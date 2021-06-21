@@ -7,24 +7,27 @@
         <label><h4>Image Type</h4></label>
     </div>
     <div>
-        <input id="imageTypeInput" name="ImageType" value="brightfield" style="display:none;">
+        <input id="imageTypeInput" name="ImageType" value="bright" style="display:none;">
         <div
             type="text"
             class="img-type-btn btn btn-outline-primary active"
-            id="brightfield"
-            value="Brightfield"
+            id="bright"
+            value="bright"
             aria-pressed="true"
         >
-            Brightfield
+            bright
         </div>
         <div
             type="text"
             class="img-type-btn btn btn-outline-primary"
-            id="phasecontrast"    
-            value="Phase Contrast"
+            id="dark"    
+            value="dark"
         >
-            Phase Contrast
+            dark
         </div>
+        <small id="ImageTypeHelpBlock" class="form-text text-muted">
+            The brightness of the cell bodies relative to the image background
+        </small>
     </div>
 </p>
 
@@ -35,6 +38,17 @@
     <input type="text" pattern="^([0-9]+|Inf|inf)$"class="form-control" placeholder="inf" aria-label="hole fill area" name="HoleFillArea" id="holefillarea" value="inf">
     <small id="holeFillAreaHelpBlock" class="form-text text-muted">
         Size (in pixels) of the largest empty space between cells (on the inside of a colony) to consider part of the colony. Intercell space is not typically easily identified in colonies of round cells; for these we recommend first trying the default setting (inf). However, intercell space can often be accurately parsed in colonies of rod-shaped cells.
+    </small>
+    </div>
+</p>
+
+<!-- Cell Intensity Num -->
+<p>
+    <div>
+    <label><h4>Cell Intensity Number</h4></label>
+    <input type="number" class="form-control" value=1  min=1 max=2 placeholder="1" aria-label="cell_intensity_num" name="CellIntensityNum" id="cellintensitynum">
+    <small id="CellIntensityNumHelpBlock" class="form-text text-muted">
+        The number of distinct intensity categories belonging to cells in the image; determines whether 2 or 3 Gaussians are used to fit intensity log histogram for threshold determination. Can be set to 1 (default, recommended) or 2 (in rare cases).
     </small>
     </div>
 </p>

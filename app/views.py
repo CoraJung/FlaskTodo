@@ -178,6 +178,17 @@ def upload_folder_to_gcp(path_to_upload, target_folder, bucket_obj, make_public)
     folder_success = success_list and all(success_list)
     return(folder_success)
 
+def get_folder_unique_key():
+    """
+    Gets unique key prepended with date and time
+    YYYYMMDD-HH-MM-SS-uuid
+    """
+    now = datetime.now()
+    dt_str = now.strftime("%Y%m%d-%H-%M-%S")
+    unique_str = str(uuid4())
+    unique_key = '-'.join([dt_str,unique_str])
+    return(unique_key)
+
 def zip_analysis_folder(zipname, path):
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d_%H_%M_%S")
@@ -204,6 +215,7 @@ def check_image_processing_params(form_dict):
     """
     image_type = form_dict["ImageType"]
     hole_fill_area_str = form_dict["HoleFillArea"]
+    cell_intensity_num = int(form_dict["CellIntensityNum"])
     if hole_fill_area_str.lower().strip()=='inf':
         hole_fill_area = np.inf
     else:
@@ -215,7 +227,7 @@ def check_image_processing_params(form_dict):
     else:
         cleanup = False
         max_proportion_exposed_edge = np.nan
-    return(image_type, hole_fill_area, cleanup, max_proportion_exposed_edge)
+    return(image_type, hole_fill_area, cleanup, max_proportion_exposed_edge, cell_intensity_num)
 
 def check_permission_params(form_dict):
     """
@@ -250,7 +262,7 @@ def upload_image_cr():
     site_output_dict = dict(result.items())
 
     # get image analysis parameters
-    image_type, hole_fill_area, cleanup, max_proportion_exposed_edge = \
+    image_type, hole_fill_area, cleanup, max_proportion_exposed_edge, cell_intensity_num = \
         check_image_processing_params(site_output_dict)
 
     review_permission, user_email = check_permission_params(site_output_dict)
@@ -280,7 +292,7 @@ def upload_image_cr():
             flash("⚠️ Upload a single image file only", "error")
             return redirect(request.url)
         # create a unique key to attach to original input image when it was first created.
-        unique_key = str(uuid4())
+        unique_key = get_folder_unique_key()
         # save input image to local folder
         input_path, output_path = make_io_dirs("cr", unique_key)
 
@@ -297,6 +309,7 @@ def upload_image_cr():
         colony_mask, colony_property_df = analyze_single_image(
             input_im_path=save_path, output_path=output_path, image_type=image_type,
             hole_fill_area=hole_fill_area, cleanup=cleanup, max_proportion_exposed_edge=max_proportion_exposed_edge,
+            cell_intensity_num = cell_intensity_num,
             save_extra_info=True)
         analysis_stop_time = time.process_time()
         analysis_time = analysis_stop_time-analysis_start_time
@@ -304,8 +317,6 @@ def upload_image_cr():
 
         # get number of detected colonies
         detected_colonies = colony_property_df.index.size
-        # create a unique key to attach to original input images when they are first created.
-        unique_file_key = str(uuid4())
 
         # don't need to upload input files to cloud            
         # upload processed files to cloud
@@ -314,7 +325,6 @@ def upload_image_cr():
                 temp_storage_bucket,
                 output_path,
                 analysis_type_folder_name="cr",
-                unique_key=unique_key,
                 make_public = True
                 )
         flash("File(s) successfully uploaded", "info")
@@ -351,7 +361,7 @@ def upload_image_gr():
     site_output_dict = dict(result.items())
 
     # get image analysis parameters
-    image_type, hole_fill_area, cleanup, max_proportion_exposed_edge = \
+    image_type, hole_fill_area, cleanup, max_proportion_exposed_edge, cell_intensity_num = \
         check_image_processing_params(site_output_dict)
 
     review_permission, user_email = check_permission_params(site_output_dict)
@@ -361,11 +371,11 @@ def upload_image_gr():
 
     files = request.files.getlist("image")
     print(files)
-    total_timepoint_num = len(files)
-    print("total_timepoint_num: ", total_timepoint_num)
+    max_timepoint_num = len(files)
+    print("max_timepoint_num: ", max_timepoint_num)
 
     # create a unique key to attach to input images when they are first created.
-    unique_key = str(uuid4())
+    unique_key = get_folder_unique_key()
     input_path, output_path = make_io_dirs("gr", unique_key)
 
     print("start uploading files to the local server")
@@ -389,10 +399,11 @@ def upload_image_gr():
     flash("Analyzing files", "info")
     analysis_start_time = time.process_time()
     run_default_growth_rate_analysis(input_path=input_path, output_path=output_path,
-        total_timepoint_num=total_timepoint_num, hole_fill_area=hole_fill_area, cleanup=cleanup,
+        max_timepoint_num=max_timepoint_num, hole_fill_area=hole_fill_area, cleanup=cleanup,
         max_proportion_exposed_edge=max_proportion_exposed_edge,
+        cell_intensity_num=cell_intensity_num,
         timepoint_spacing=timepoint_spacing, main_channel_imagetype=image_type,
-        growth_window_timepoints=growth_window_timepoints, total_xy_position_num=1,
+        growth_window_timepoints=growth_window_timepoints, max_xy_position_num=1,
         im_file_extension=extension
         )
     analysis_stop_time = time.process_time()
@@ -405,7 +416,6 @@ def upload_image_gr():
                 temp_storage_bucket,
                 output_path,
                 analysis_type_folder_name="gr",
-                unique_key=unique_key,
                 make_public = True
                 )
     flash("File(s) successfully uploaded", "info")
@@ -431,7 +441,7 @@ def upload_image_gr():
         gr_tables=[gr_df.round(3).to_html(classes='styled-table', justify = 'center', header=True, index=False)])
 
 
-def upload_output_files_gc(bucket_obj, path_to_upload, analysis_type_folder_name, unique_key, make_public):
+def upload_output_files_gc(bucket_obj, path_to_upload, analysis_type_folder_name, make_public):
     '''
     Uploads all output files in path_to_upload to bucket_obj
 
@@ -443,8 +453,6 @@ def upload_output_files_gc(bucket_obj, path_to_upload, analysis_type_folder_name
 
     analysis_type_folder_name is either 'gr' (for growth rate) 
     or 'cr' (for colony recognition)
-
-    unique_key is the unique key used for the current user's folder name
 
     make_public is whether the folder should be made available to access 
     online
@@ -527,7 +535,7 @@ def upload_output_files_gc(bucket_obj, path_to_upload, analysis_type_folder_name
                 folder_index = local_path_ls.index(analysis_type_folder_name) #gr or cr
                 local_path = os.path.join(*local_path_ls[folder_index:])
                 output_filename = filename
-                object_name = os.path.join(analysis_type_folder_name, unique_key, local_path, output_filename) #gr/unique_key/.../filename
+                object_name = os.path.join(local_path, output_filename) #gr/unique_key/.../filename etc
 
                 # upload data, including the zip file
                 success, url = upload_to_gcp_bucket(bucket_obj, current_filepath, object_name, make_public)
