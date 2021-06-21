@@ -18,7 +18,7 @@
 
             <p class="lead text-justify">For <b>brightfield imaging</b>, ideal images for PIE analysis are slightly defocused, with dark outlining surrounding cells that are brighter than the background. For <b>phase-contrast imaging</b>, a wide range of imaging conditions are acceptable. (see example image below).</p>
 
-            <p class="lead text-justify">Please refer to <a href="https://www.biorxiv.org/content/10.1101/253724v2.full" target="_blank">the paper</a> for technical details.</p>
+            <p class="lead text-justify">Please refer to <a href="https://www.biorxiv.org/content/10.1101/253724" target="_blank">the paper</a> for technical details.</p>
 
             <p align="center">
                 <a class="btn btn-primary" href="/colony-recognition" role="button">Colony Recognition Analysis</a>
@@ -32,14 +32,15 @@
             <h3>Some Example Images</h3>
             <br>
             <div>
-                <img style="max-width: 400px;" src="{{ url_for('static', filename='img/examples/microbe_zoo.jpg') }}" alt="">
+                <img style="max-width: 800px;" src="{{ url_for('static', filename='img/examples/microbe_zoo.png') }}" alt="">
                 <p class="font-weight-bold">PIE successfully recognizes cell or microcolony outlines across a wide range of microbes.</p>
                 <p>
-                (A-B) Microcolonies of S. cerivisae and S. pombe, respectively.
-                (C-D) Individuals of S. robusta and T. vaginalis.
-                (E) Dividing E. coli cells.
-                (F) Co-cultured microcolonies of P. aeruginosa and S. aureus. 
-                Scalebar is 10 µm. Images in (C) from Luke Noble and Matthew Rockman; (D) from Sally Warring and Jane Carlton; and (F) from Dominique Limoli and Kaitlin Yarrington (from <a href="https://elifesciences.org/articles/47365" target="_blank">Limoli et al., 2019</a>, used with permission)
+                (A-B) Brightfield images of S. cerevisiae and S. pombe microcolonies, respectively<br>
+                (C-D) Brightfield images of individuals of S. robusta and T. vaginalis, respectively<br>
+                (E) Brightfield image of Chlorella sorokiniana microcolony<br>
+                (F) Phase-contrast image of co-cultured microcolonies of P. aeruginosa and S. aureus microcolonies.<br>
+                (G-H) Brightfield and phase-contrast images, respectively, of E. coli cells and microcolony.<br>
+                Scale bar is 10 µm. Images in (C) from Luke Noble and Matthew Rockman; (D) from Sally Warring and Jane Carlton; (E) from Dietrich Kohlheyer (from <a href=" https://doi.org/10.1371/journal.pone.0216093" target="_blank">Westerwalbesloh, Brehl et al., 2019</a>); (F) from Dominique Limoli and Kaitlin Yarrington (from <a href="https://elifesciences.org/articles/47365" target="_blank">Limoli et al., 2019</a>) (H) from Jeffrey Carey and Mark Goulian (from <a href="https://doi.org/10.1016/j.cell.2018.02.005" target="_blank">Carey et al., 2018</a>), used with authors’ permission.
                 </p>
             </div>
             <hr>
